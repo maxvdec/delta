@@ -1,3 +1,9 @@
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
+
 pub struct Context {
     pub name: String,
     pub version: String,
@@ -17,5 +23,32 @@ impl Window {
             width,
             height,
         }
+    }
+
+    pub fn launch(&self) -> Option<()> {
+        let event_loop = EventLoop::new();
+        let window = WindowBuilder::new()
+            .with_title(&self.title)
+            .with_inner_size(winit::dpi::LogicalSize::new(self.width, self.height))
+            .build(&event_loop)
+            .ok()?;
+
+        event_loop.run(move |event, _, control_flow| {
+            *control_flow = ControlFlow::Wait;
+
+            match event {
+                Event::WindowEvent { event, .. } => match event {
+                    WindowEvent::CloseRequested => {
+                        *control_flow = ControlFlow::Exit;
+                    }
+                    _ => (),
+                },
+                Event::MainEventsCleared => {
+                    window.request_redraw();
+                }
+                Event::RedrawRequested(_) => {}
+                _ => (),
+            }
+        });
     }
 }
