@@ -17,8 +17,9 @@ struct VertexOut {
 
 vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
     VertexOut out;
-    
-    out.position = float4(in.position, in.zIndex, 1.0);
+
+    float depth = (0 + 50 - in.zIndex) / 50;
+    out.position = float4(in.position, depth, 1.0);
     out.color = in.color;
     return out;
 }

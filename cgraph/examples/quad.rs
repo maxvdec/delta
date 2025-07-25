@@ -10,7 +10,7 @@ fn main() {
         &mut win,
         Size::new(400.0, 400.0),
         Color::new(0.0, 1.0, 0.0, 1.0),
-        2.0,
+        40.0,
         Position::new(0.0, 0.0),
     );
 
@@ -18,7 +18,7 @@ fn main() {
         &mut win,
         Size::new(200.0, 200.0),
         Color::new(1.0, 1.0, 0.0, 1.0),
-        2.0,
+        50.0,
         Position::new(0.0, 0.0),
     );
 

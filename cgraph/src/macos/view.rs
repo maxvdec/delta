@@ -14,7 +14,7 @@ pub fn setup_layer(device: &DeviceRef, window: &Window) -> MetalLayer {
 
     let layer = MetalLayer::new();
     layer.set_device(device);
-    layer.set_pixel_format(metal::MTLPixelFormat::BGRA8Unorm);
+    layer.set_pixel_format(metal::MTLPixelFormat::RGBA8Unorm);
     layer.set_presents_with_transaction(false);
 
     unsafe {

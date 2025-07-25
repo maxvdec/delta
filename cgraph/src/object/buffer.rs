@@ -1,4 +1,5 @@
 #[cfg(target_os = "macos")]
+#[derive(Debug)]
 pub struct Buffer<T> {
     pub data: Vec<T>,
     pub buffer: metal::Buffer,

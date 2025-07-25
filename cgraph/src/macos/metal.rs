@@ -1,5 +1,7 @@
 use glam::{Mat4, Vec2, Vec4};
+use memoffset::offset_of;
 use metal::*;
+use std::mem::size_of;
 use winit::window::Window;
 
 use crate::{
@@ -41,7 +43,7 @@ impl Renderer for MetalRenderer {
             .color_attachments()
             .object_at(0)
             .unwrap()
-            .set_pixel_format(MTLPixelFormat::BGRA8Unorm);
+            .set_pixel_format(MTLPixelFormat::RGBA8Unorm);
 
         pipeline_descriptor.set_depth_attachment_pixel_format(MTLPixelFormat::Depth32Float);
 
@@ -53,17 +55,32 @@ impl Renderer for MetalRenderer {
 
         let vertex_descriptor = VertexDescriptor::new();
 
-        set_vertex_descriptor(vertex_descriptor, 0, 0, MTLVertexFormat::Float2);
+        set_vertex_descriptor(
+            vertex_descriptor,
+            offset_of!(Vertex, position),
+            0,
+            MTLVertexFormat::Float2,
+        );
 
-        set_vertex_descriptor(vertex_descriptor, 8, 1, MTLVertexFormat::Float4);
+        set_vertex_descriptor(
+            vertex_descriptor,
+            offset_of!(Vertex, color),
+            1,
+            MTLVertexFormat::Float4,
+        );
 
-        set_vertex_descriptor(vertex_descriptor, 24, 2, MTLVertexFormat::Float);
+        set_vertex_descriptor(
+            vertex_descriptor,
+            offset_of!(Vertex, z_index),
+            2,
+            MTLVertexFormat::Float,
+        );
 
         vertex_descriptor
             .layouts()
             .object_at(0)
             .unwrap()
-            .set_stride(32);
+            .set_stride(size_of::<Vertex>() as u64);
         vertex_descriptor
             .layouts()
             .object_at(0)
@@ -124,12 +141,15 @@ impl Renderer for MetalRenderer {
         let depth_attachment = render_pass_descriptor.depth_attachment().unwrap();
         depth_attachment.set_texture(Some(&depth_texture));
         depth_attachment.set_load_action(MTLLoadAction::Clear);
-        depth_attachment.set_clear_depth(10.0);
+        depth_attachment.set_clear_depth(1.0);
         depth_attachment.set_store_action(MTLStoreAction::DontCare);
+
+        render_pass_descriptor.set_depth_attachment(Some(&depth_attachment));
 
         let encoder = command_buffer.new_render_command_encoder(&render_pass_descriptor);
         encoder.set_render_pipeline_state(&self.state);
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
+        encoder.set_cull_mode(MTLCullMode::None);
 
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;

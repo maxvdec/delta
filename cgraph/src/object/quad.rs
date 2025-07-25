@@ -50,19 +50,26 @@ pub fn create_quad(
     let window_width = window.width as f32;
     let window_height = window.height as f32;
 
-    let norm_x = position.x / window_width;
-    let norm_y = position.y / window_height;
-    let norm_width = size.width / window_width;
-    let norm_height = size.height / window_height;
+    let half_width = size.width / 2.0;
+    let half_height = size.height / 2.0;
+
+    let left = (position.x - half_width) / window_width * 2.0 - 1.0;
+    let right = (position.x + half_width) / window_width * 2.0 - 1.0;
+    let bottom = -((position.y - half_height) / window_height * 2.0 - 1.0); // Flip Y
+    let top = -((position.y + half_height) / window_height * 2.0 - 1.0); // Flip Y
 
     let vertices = vec![
-        Vertex::new(norm_x, norm_y, z_index, color), // Bottom-left
-        Vertex::new(norm_x + norm_width, norm_y, z_index, color), // Bottom-right
-        Vertex::new(norm_x + norm_width, norm_y + norm_height, z_index, color), // Top-right
-        Vertex::new(norm_x, norm_y + norm_height, z_index, color), // Top-left
+        Vertex::new(left, bottom, z_index, color), // Bottom-left (0)
+        Vertex::new(right, bottom, z_index, color), // Bottom-right (1)
+        Vertex::new(right, top, z_index, color),   // Top-right (2)
+        Vertex::new(left, top, z_index, color),    // Top-left (3)
     ];
 
-    let indices = vec![0, 1, 2, 0, 2, 3];
+    let indices = vec![
+        0, 1, 2, // First triangle: bottom-left, bottom-right, top-right
+        0, 2, 3, // Second triangle: bottom-left, top-right, top-left
+    ];
+
     let mut object = Object::new(vertices, indices);
     object.update_buffer();
     window.add_object(object);
@@ -78,19 +85,26 @@ pub fn create_rounded_quad(
     let window_width = window.width as f32;
     let window_height = window.height as f32;
 
-    let norm_x = position.x / window_width;
-    let norm_y = position.y / window_height;
-    let norm_width = size.width / window_width;
-    let norm_height = size.height / window_height;
+    let half_width = size.width / 2.0;
+    let half_height = size.height / 2.0;
+
+    let left = (position.x - half_width) / window_width * 2.0 - 1.0;
+    let right = (position.x + half_width) / window_width * 2.0 - 1.0;
+    let bottom = -((position.y - half_height) / window_height * 2.0 - 1.0); // Flip Y
+    let top = -((position.y + half_height) / window_height * 2.0 - 1.0); // Flip Y
 
     let vertices = vec![
-        Vertex::new(norm_x, norm_y, z_index, color),
-        Vertex::new(norm_x + norm_width, norm_y, z_index, color),
-        Vertex::new(norm_x + norm_width, norm_y + norm_height, z_index, color),
-        Vertex::new(norm_x, norm_y + norm_height, z_index, color),
+        Vertex::new(left, bottom, z_index, color),  // Bottom-left
+        Vertex::new(right, bottom, z_index, color), // Bottom-right
+        Vertex::new(right, top, z_index, color),    // Top-right
+        Vertex::new(left, top, z_index, color),     // Top-left
     ];
 
-    let indices = vec![0, 1, 2, 0, 2, 3];
+    let indices = vec![
+        0, 1, 2, // First triangle
+        0, 2, 3, // Second triangle
+    ];
+
     let mut object = Object::new(vertices, indices);
     object.update_buffer();
     window.add_object(object);
