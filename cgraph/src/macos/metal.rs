@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec2, Vec4};
+use glam::{Mat4, Vec2};
 use memoffset::offset_of;
 use metal::*;
 use std::mem::size_of;
