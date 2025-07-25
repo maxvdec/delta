@@ -1,6 +1,6 @@
 use cgraph::{
     app::Window,
-    object::quad::{Position, Size, create_quad},
+    object::quad::{Color, Position, Size, create_quad},
 };
 
 fn main() {
@@ -8,10 +8,18 @@ fn main() {
 
     create_quad(
         &mut win,
-        Size::new(1.0, 1.0),
-        [0.0, 1.0, 0.0, 1.0],
-        0.0,
-        Position::new(-0.5, -0.5),
+        Size::new(400.0, 400.0),
+        Color::new(0.0, 1.0, 0.0, 1.0),
+        2.0,
+        Position::new(0.0, 0.0),
+    );
+
+    create_quad(
+        &mut win,
+        Size::new(200.0, 200.0),
+        Color::new(1.0, 1.0, 0.0, 1.0),
+        2.0,
+        Position::new(0.0, 0.0),
     );
 
     win.launch();

@@ -30,6 +30,10 @@ impl Object {
             indices,
             buffer,
             index_buffer,
+            position: [0.0, 0.0],
+            size: [1.0, 1.0],
+            rotation: 0.0,
+            corner_radius: 0.0,
         }
     }
 

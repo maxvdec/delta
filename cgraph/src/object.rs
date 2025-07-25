@@ -1,9 +1,11 @@
+use glam::{Vec2, Vec4};
+
 use crate::object::buffer::Buffer;
 
 #[repr(C)]
 pub struct Vertex {
-    pub position: [f32; 2],
-    pub color: [f32; 4],
+    pub position: Vec2,
+    pub color: Vec4,
     pub z_index: f32,
     _padding: f32,
 }
@@ -22,16 +24,16 @@ impl Clone for Vertex {
 impl Vertex {
     pub fn default() -> Self {
         Vertex {
-            position: [0.0, 0.0],
-            color: [1.0, 1.0, 1.0, 1.0],
+            position: Vec2::new(0.0, 0.0),
+            color: Vec4::new(1.0, 1.0, 1.0, 1.0),
             z_index: 0.0,
             _padding: 0.0,
         }
     }
 
-    pub fn new(x: f32, y: f32, z_index: f32, color: [f32; 4]) -> Self {
+    pub fn new(x: f32, y: f32, z_index: f32, color: Vec4) -> Self {
         Vertex {
-            position: [x, y],
+            position: Vec2::new(x, y),
             color,
             z_index,
             _padding: 0.0,
@@ -45,6 +47,11 @@ pub struct Object {
 
     pub buffer: Buffer<Vertex>,
     pub index_buffer: Buffer<u32>,
+
+    pub position: [f32; 2],
+    pub size: [f32; 2],
+    pub rotation: f32,
+    pub corner_radius: f32,
 }
 
 impl Object {
