@@ -9,10 +9,9 @@ use crate::{
 use core_graphics_types::geometry::CGSize;
 
 pub struct MetalRenderer {
-    device: Device,
     command_queue: CommandQueue,
     state: RenderPipelineState,
-    objects: Vec<crate::renderer::Object>,
+    objects: Vec<crate::object::Object>,
     layer: MetalLayer,
 }
 
@@ -60,6 +59,7 @@ impl Renderer for MetalRenderer {
             .object_at(0)
             .unwrap()
             .set_step_rate(1);
+
         pipeline_descriptor.set_vertex_descriptor(Some(&vertex_descriptor));
 
         let state = match device.new_render_pipeline_state(&pipeline_descriptor) {
@@ -70,7 +70,6 @@ impl Renderer for MetalRenderer {
         let layer = setup_layer(device.as_ref(), window);
 
         MetalRenderer {
-            device,
             command_queue,
             state,
             layer,
@@ -78,7 +77,7 @@ impl Renderer for MetalRenderer {
         }
     }
 
-    fn add_object(&mut self, object: crate::renderer::Object) {
+    fn add_object(&mut self, object: crate::object::Object) {
         self.objects.push(object);
     }
 
@@ -104,6 +103,19 @@ impl Renderer for MetalRenderer {
         color_attachment.set_store_action(MTLStoreAction::Store);
 
         let encoder = command_buffer.new_render_command_encoder(&render_pass_descriptor);
+        encoder.set_render_pipeline_state(&self.state);
+
+        for object in &self.objects {
+            let buffer = &object.get_buffer().buffer;
+            encoder.set_vertex_buffer(0, Some(&buffer), 0);
+            encoder.draw_indexed_primitives(
+                MTLPrimitiveType::Triangle,
+                object.indices.len() as u64,
+                MTLIndexType::UInt32,
+                &object.get_index_buffer().buffer,
+                0,
+            );
+        }
 
         encoder.end_encoding();
 
@@ -134,7 +146,7 @@ fn set_vertex_descriptor(
         .set_format(format);
     vertex_descriptor
         .attributes()
-        .object_at(0)
+        .object_at(index as u64)
         .unwrap()
         .set_buffer_index(0);
 }

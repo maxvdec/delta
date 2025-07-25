@@ -1,4 +1,5 @@
 pub mod app;
+pub mod object;
 
 mod renderer;
 

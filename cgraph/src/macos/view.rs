@@ -4,7 +4,7 @@ use cocoa::{
     base::{YES, id, nil},
     foundation::NSAutoreleasePool,
 };
-use metal::{Device, DeviceRef, MetalLayer};
+use metal::{DeviceRef, MetalLayer};
 
 use objc::{msg_send, *};
 use winit::{platform::macos::WindowExtMacOS, window::Window};

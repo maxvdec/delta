@@ -16,46 +16,63 @@ pub struct Window {
     pub title: String,
     pub width: u32,
     pub height: u32,
+    renderer: Box<dyn crate::renderer::Renderer>,
+    window: winit::window::Window,
+    event_loop: EventLoop<()>,
 }
 
 impl Window {
     pub fn new(title: &str, width: u32, height: u32) -> Self {
+        let event_loop = EventLoop::new();
+        let window = WindowBuilder::new()
+            .with_title(title)
+            .with_inner_size(winit::dpi::LogicalSize::new(width, height))
+            .build(&event_loop)
+            .expect("Cannot create window");
         Window {
             title: title.to_string(),
             width,
             height,
+            renderer: create_renderer(&window),
+            window,
+            event_loop,
         }
     }
 
-    pub fn launch(&self) -> Option<()> {
-        let event_loop = EventLoop::new();
-        let window = WindowBuilder::new()
-            .with_title(&self.title)
-            .with_inner_size(winit::dpi::LogicalSize::new(self.width, self.height))
-            .build(&event_loop)
-            .ok()?;
+    pub fn launch(self) -> () {
+        self.renderer.resize(self.width as f64, self.height as f64);
 
-        let renderer = create_renderer(&window);
-        renderer.resize(self.width as f64, self.height as f64);
-
-        event_loop.run(move |event, _, control_flow| {
+        self.event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
 
             match event {
                 Event::WindowEvent { event, .. } => match event {
                     WindowEvent::CloseRequested => {
+                        self.renderer.destroy();
                         *control_flow = ControlFlow::Exit;
                     }
                     _ => (),
                 },
                 Event::MainEventsCleared => {
-                    window.request_redraw();
+                    self.window.request_redraw();
                 }
                 Event::RedrawRequested(_) => {
-                    renderer.render();
+                    self.renderer.render();
                 }
                 _ => (),
             }
         });
+    }
+
+    pub fn add_object(&mut self, object: crate::object::Object) {
+        self.renderer.add_object(object);
+    }
+
+    pub fn clear(&mut self) {
+        self.renderer.clear();
+    }
+
+    pub fn destroy(&self) {
+        self.renderer.destroy();
     }
 }
