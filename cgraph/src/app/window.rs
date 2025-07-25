@@ -4,6 +4,8 @@ use winit::{
     window::WindowBuilder,
 };
 
+use crate::renderer::create_renderer;
+
 pub struct Context {
     pub name: String,
     pub version: String,
@@ -33,6 +35,9 @@ impl Window {
             .build(&event_loop)
             .ok()?;
 
+        let renderer = create_renderer(&window);
+        renderer.resize(self.width as f64, self.height as f64);
+
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
 
@@ -46,7 +51,9 @@ impl Window {
                 Event::MainEventsCleared => {
                     window.request_redraw();
                 }
-                Event::RedrawRequested(_) => {}
+                Event::RedrawRequested(_) => {
+                    renderer.render();
+                }
                 _ => (),
             }
         });
