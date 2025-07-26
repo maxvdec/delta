@@ -84,6 +84,10 @@ impl Window {
                         self.renderer.destroy();
                         *control_flow = ControlFlow::Exit;
                     }
+                    WindowEvent::Resized(physical_size) => {
+                        self.renderer
+                            .resize(physical_size.width as f64, physical_size.height as f64);
+                    }
                     _ => (),
                 },
                 Event::MainEventsCleared => {

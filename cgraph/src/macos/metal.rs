@@ -218,21 +218,37 @@ struct Uniforms {
 }
 
 impl Object {
-    fn make_uniforms(&self, _: &winit::window::Window) -> crate::object::buffer::Buffer<Uniforms> {
+    fn make_uniforms(
+        &self,
+        window: &winit::window::Window,
+    ) -> crate::object::buffer::Buffer<Uniforms> {
         let translation =
             Mat4::from_translation(Vec2::new(self.position.x, self.position.y).extend(0.0));
         let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));
 
-        let model_matrix = translation * scale;
+        let rotation = Mat4::from_rotation_z(self.rotation);
+
+        let window_size = window.inner_size();
+        let width = window_size.width as f32;
+        let height = window_size.height as f32;
+        let left = 0.0;
+        let right = width;
+        let top = 0.0;
+        let bottom = height;
+        let near = -100.0;
+        let far = 100.0;
+
+        let projection = Mat4::orthographic_rh(left, right, bottom, top, near, far);
+
+        let model_matrix = projection * rotation * translation * scale;
 
         let uniforms = Uniforms {
             rect_position: Vec2::new(self.position.x, self.position.y),
-            rect_size: Vec2::new(self.original_pixel_size.x, self.original_pixel_size.y),
+            rect_size: Vec2::new(self.scale.x, self.scale.y),
             corner_radius: self.corner_radius,
             model_matrix,
         };
 
-        println!("Final uniforms: {:?}", uniforms);
         return crate::object::buffer::Buffer::new(vec![uniforms]);
     }
 }
