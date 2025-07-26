@@ -46,8 +46,9 @@ pub struct Object {
     pub buffer: Buffer<Vertex>,
     pub index_buffer: Buffer<u32>,
 
-    pub position: [f32; 2],
-    pub size: [f32; 2],
+    pub position: Vec2,
+    pub scale: Vec2,
+    pub original_pixel_size: Vec2,
     pub rotation: f32,
     pub corner_radius: f32,
 }

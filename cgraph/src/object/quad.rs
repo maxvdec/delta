@@ -2,7 +2,7 @@ use crate::{
     app::Window,
     object::{Object, Vertex},
 };
-use glam::Vec4;
+use glam::{Vec2, Vec4};
 
 pub struct Size {
     pub width: f32,
@@ -71,8 +71,9 @@ pub fn create_quad(
     ];
 
     let mut object = Object::new(vertices, indices);
-    object.position = [position.x, position.y];
-    object.size = [size.width, size.height];
+    object.position = Vec2::new(position.x, position.y);
+    object.scale = Vec2::new(1.0, 1.0);
+    object.original_pixel_size = Vec2::new(size.width, size.height);
     object.rotation = 0.0; // No rotation for a quad
     object.corner_radius = 0.0; // No corner radius for a simple quad
     object.update_buffer();
@@ -110,8 +111,9 @@ pub fn create_rounded_quad(
     ];
 
     let mut object = Object::new(vertices, indices);
-    object.position = [position.x, position.y];
-    object.size = [size.width, size.height];
+    object.position = Vec2::new(position.x, position.y);
+    object.scale = Vec2::new(1.0, 1.0);
+    object.original_pixel_size = Vec2::new(size.width, size.height);
     object.rotation = 0.0; // No rotation for a quad
     object.corner_radius = 0.0; // No corner radius for a simple quad
     object.update_buffer();

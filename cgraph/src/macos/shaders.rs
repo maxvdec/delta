@@ -26,7 +26,7 @@ vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& unifor
     VertexOut out;
 
     float depth = (0 + 50 - in.zIndex) / 50;
-    out.position = uniforms.model_matrix * float4(in.position, depth, 1.0);
+    out.position = float4(in.position, depth, 1.0);
     out.color = in.color;
     return out;
 }

@@ -154,7 +154,7 @@ impl Renderer for MetalRenderer {
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
             encoder.set_vertex_buffer(0, Some(&buffer), 0);
-            let uniform_buffer = object.make_uniforms(window);
+            let uniform_buffer = object.make_uniforms(&window);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
             encoder.draw_indexed_primitives(
@@ -214,27 +214,15 @@ impl Object {
         &self,
         window: &winit::window::Window,
     ) -> crate::object::buffer::Buffer<Uniforms> {
-        let window_width = window.inner_size().width as f32;
-        let window_height = window.inner_size().height as f32;
-
         let translation =
-            Mat4::from_translation(Vec2::new(self.position[0], self.position[1]).extend(0.0));
-        let scale = Mat4::from_scale(Vec2::new(self.size[0], self.size[1]).extend(1.0));
+            Mat4::from_translation(Vec2::new(self.position.x, self.position.y).extend(0.0));
+        let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));
 
-        let projection = Mat4::orthographic_rh(
-            -window_width / 2.0,  // left
-            window_width / 2.0,   // right
-            -window_height / 2.0, // bottom (note: flipped for screen coordinates)
-            window_height / 2.0,  // top
-            -1.0,                 // near
-            1.0,                  // far
-        );
-
-        let model_matrix = projection * translation * scale;
+        let model_matrix = translation * scale;
 
         let uniforms = Uniforms {
-            rect_position: Vec2::new(self.position[0], self.position[1]),
-            rect_size: Vec2::new(self.size[0], self.size[1]),
+            rect_position: Vec2::new(self.position.x, self.position.y),
+            rect_size: Vec2::new(self.original_pixel_size.x, self.original_pixel_size.y),
             corner_radius: self.corner_radius,
             model_matrix,
         };

@@ -1,4 +1,5 @@
-use crate::app::Window;
+use glam::Vec2;
+
 use crate::object::buffer::Buffer;
 use crate::object::{Object, Vertex};
 
@@ -31,8 +32,9 @@ impl Object {
             indices,
             buffer,
             index_buffer,
-            position: [0.0, 0.0],
-            size: [1.0, 1.0],
+            position: Vec2::new(0.0, 0.0),
+            scale: Vec2::new(1.0, 1.0),
+            original_pixel_size: Vec2::new(1.0, 1.0),
             rotation: 0.0,
             corner_radius: 0.0,
         }

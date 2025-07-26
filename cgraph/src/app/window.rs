@@ -16,6 +16,7 @@ pub struct Window {
     pub title: String,
     pub width: u32,
     pub height: u32,
+    pub update: Box<dyn Fn() -> ()>,
     renderer: Box<dyn crate::renderer::Renderer>,
     window: winit::window::Window,
     event_loop: EventLoop<()>,
@@ -40,7 +41,7 @@ impl Window {
     }
 
     pub fn launch(self) -> () {
-        let mut renderer = self.renderer;
+        let renderer = self.renderer;
         let window = self.window;
 
         renderer.resize(self.width as f64, self.height as f64);
