@@ -151,3 +151,65 @@ pub fn create_circle(
     object.update_buffer();
     window.add_object(object);
 }
+
+pub fn create_circle_with_radius(
+    window: &mut Window,
+    radius: f32,
+    color: Color,
+    z_index: f32,
+    position: Position,
+) -> () {
+    let size = Size::new(radius * 2.0, radius * 2.0);
+    create_circle(window, size, color, z_index, position);
+}
+
+pub fn create_polygon(
+    window: &mut Window,
+    size: Size,
+    color: Color,
+    z_index: f32,
+    position: Position,
+    faces: usize,
+) -> () {
+    if faces < 3 {
+        return;
+    }
+
+    let radius = size.width.min(size.height) / 2.0;
+    let center_x = position.x;
+    let center_y = position.y;
+
+    let mut vertices = vec![Vertex::new(
+        center_x,
+        center_y,
+        z_index,
+        color,
+        Vec2::new(0.5, 0.5),
+    )];
+
+    for i in 0..faces {
+        let angle = 2.0 * std::f32::consts::PI * i as f32 / faces as f32;
+        let x = center_x + radius * angle.cos();
+        let y = center_y + radius * angle.sin();
+
+        let u = (x - (center_x - radius)) / (2.0 * radius);
+        let v = (y - (center_y - radius)) / (2.0 * radius);
+
+        vertices.push(Vertex::new(x, y, z_index, color, Vec2::new(u, v)));
+    }
+
+    let mut indices: Vec<u32> = Vec::new();
+    for i in 0..faces {
+        let next = if i == faces - 1 { 1 } else { (i + 2) as u32 };
+        indices.extend_from_slice(&[0, (i + 1) as u32, next]);
+    }
+
+    let mut object = Object::new(vertices, indices);
+    object.position = Vec2::new(position.x, position.y);
+    object.scale = Vec2::new(1.0, 1.0);
+    object.original_pixel_size = Vec2::new(size.width, size.height);
+    object.rotation = 0.0;
+    object.corner_radius = 0.0;
+    object.update_buffer();
+    window.add_object(object);
+}
