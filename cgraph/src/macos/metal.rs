@@ -17,8 +17,8 @@ pub struct MetalRenderer {
     command_queue: CommandQueue,
     state: RenderPipelineState,
     depth_stencil_state: DepthStencilState,
-    objects: Vec<crate::object::Object>,
-    layer: MetalLayer,
+    pub objects: Vec<crate::object::Object>,
+    pub layer: MetalLayer,
 }
 
 impl Renderer for MetalRenderer {
@@ -175,6 +175,14 @@ impl Renderer for MetalRenderer {
     fn resize(&self, width: f64, height: f64) {
         self.layer.set_drawable_size(CGSize::new(width, height));
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 fn set_vertex_descriptor(
@@ -210,10 +218,7 @@ struct Uniforms {
 }
 
 impl Object {
-    fn make_uniforms(
-        &self,
-        window: &winit::window::Window,
-    ) -> crate::object::buffer::Buffer<Uniforms> {
+    fn make_uniforms(&self, _: &winit::window::Window) -> crate::object::buffer::Buffer<Uniforms> {
         let translation =
             Mat4::from_translation(Vec2::new(self.position.x, self.position.y).extend(0.0));
         let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));

@@ -1,7 +1,8 @@
 pub mod app;
 pub mod object;
 
-mod renderer;
+pub mod renderer;
+mod utils;
 
 #[cfg(target_os = "macos")]
 pub mod macos;

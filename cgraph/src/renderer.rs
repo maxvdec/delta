@@ -12,6 +12,9 @@ pub trait Renderer {
     fn destroy(&self);
     fn add_object(&mut self, object: Object);
     fn clear(&mut self);
+    fn as_any(&self) -> &dyn std::any::Any;
+    #[allow(dead_code)]
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
 }
 
 pub fn create_renderer(window: &winit::window::Window) -> Box<dyn Renderer> {
