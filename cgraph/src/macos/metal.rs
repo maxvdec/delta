@@ -23,6 +23,8 @@ pub struct MetalRenderer {
     pub objects: Vec<crate::object::Object>,
     pub layer: MetalLayer,
     sampler: SamplerState,
+    msaa_texture: Texture,
+    depth_texture: Texture,
 }
 
 impl Renderer for MetalRenderer {
@@ -48,6 +50,7 @@ impl Renderer for MetalRenderer {
             .object_at(0)
             .unwrap()
             .set_pixel_format(MTLPixelFormat::RGBA8Unorm);
+        pipeline_descriptor.set_sample_count(4);
 
         pipeline_descriptor.set_depth_attachment_pixel_format(MTLPixelFormat::Depth32Float);
 
@@ -123,6 +126,28 @@ impl Renderer for MetalRenderer {
         sampler_descriptor.set_address_mode_t(MTLSamplerAddressMode::ClampToEdge);
         let sampler = device.new_sampler(&sampler_descriptor);
 
+        let msaa_texture_desc = TextureDescriptor::new();
+        msaa_texture_desc.set_pixel_format(MTLPixelFormat::RGBA8Unorm);
+        msaa_texture_desc.set_width(window.inner_size().width as u64);
+        msaa_texture_desc.set_height(window.inner_size().height as u64);
+        msaa_texture_desc.set_storage_mode(MTLStorageMode::Private);
+        msaa_texture_desc.set_usage(MTLTextureUsage::RenderTarget);
+        msaa_texture_desc.set_texture_type(MTLTextureType::D2Multisample);
+        msaa_texture_desc.set_sample_count(4); // Enable MSAA with 4 samples
+        let msaa_texture = device.new_texture(&msaa_texture_desc);
+
+        let depth_texture = {
+            let depth_desc = TextureDescriptor::new();
+            depth_desc.set_pixel_format(MTLPixelFormat::Depth32Float);
+            depth_desc.set_width(window.inner_size().width as u64);
+            depth_desc.set_height(window.inner_size().height as u64);
+            depth_desc.set_storage_mode(MTLStorageMode::Private);
+            depth_desc.set_usage(MTLTextureUsage::RenderTarget);
+            depth_desc.set_texture_type(MTLTextureType::D2Multisample);
+            depth_desc.set_sample_count(4);
+            device.new_texture(&depth_desc)
+        };
+
         MetalRenderer {
             device,
             command_queue,
@@ -131,6 +156,8 @@ impl Renderer for MetalRenderer {
             layer,
             objects: Vec::new(),
             sampler,
+            msaa_texture,
+            depth_texture,
         }
     }
 
@@ -144,11 +171,12 @@ impl Renderer for MetalRenderer {
 
     fn destroy(&self) {}
 
-    fn render(&self, _window: &winit::window::Window) {
+    fn render(&mut self, _window: &winit::window::Window) {
         let command_buffer = self.command_queue.new_command_buffer();
         let drawable = self.layer.next_drawable().expect("Failed to get drawable");
 
-        let depth_texture = self.set_depth(drawable.texture().width(), drawable.texture().height());
+        self.depth_texture =
+            self.create_depth_texture(drawable.texture().width(), drawable.texture().height());
 
         let render_pass_descriptor = RenderPassDescriptor::new();
         let color_attachment = render_pass_descriptor
@@ -156,13 +184,14 @@ impl Renderer for MetalRenderer {
             .object_at(0)
             .unwrap();
 
-        color_attachment.set_texture(Some(&drawable.texture()));
+        color_attachment.set_texture(Some(&self.msaa_texture));
         color_attachment.set_load_action(MTLLoadAction::Clear);
+        color_attachment.set_resolve_texture(Some(&drawable.texture()));
         color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0)); // Blue background
-        color_attachment.set_store_action(MTLStoreAction::Store);
+        color_attachment.set_store_action(MTLStoreAction::MultisampleResolve);
 
         let depth_attachment = render_pass_descriptor.depth_attachment().unwrap();
-        depth_attachment.set_texture(Some(&depth_texture));
+        depth_attachment.set_texture(Some(&self.depth_texture));
         depth_attachment.set_load_action(MTLLoadAction::Clear);
         depth_attachment.set_clear_depth(1.0);
         depth_attachment.set_store_action(MTLStoreAction::DontCare);
@@ -180,7 +209,7 @@ impl Renderer for MetalRenderer {
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
-            
+
             // Set texture and sampler if the object has a texture
             if object.use_texture {
                 if let Some(ref texture) = object.texture {
@@ -188,7 +217,7 @@ impl Renderer for MetalRenderer {
                     encoder.set_fragment_sampler_state(0, Some(&self.sampler));
                 }
             }
-            
+
             encoder.draw_indexed_primitives(
                 MTLPrimitiveType::Triangle,
                 object.indices.len() as u64,
@@ -204,8 +233,9 @@ impl Renderer for MetalRenderer {
         command_buffer.commit();
     }
 
-    fn resize(&self, width: f64, height: f64) {
+    fn resize(&mut self, width: f64, height: f64) {
         self.layer.set_drawable_size(CGSize::new(width, height));
+        self.update_msaa_texture(width as u64, height as u64);
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
@@ -291,14 +321,26 @@ impl Object {
 }
 
 impl MetalRenderer {
-    fn set_depth(&self, width: u64, height: u64) -> Texture {
+    fn create_depth_texture(&self, width: u64, height: u64) -> Texture {
         let depth_desc = TextureDescriptor::new();
         depth_desc.set_pixel_format(MTLPixelFormat::Depth32Float);
         depth_desc.set_width(width);
         depth_desc.set_height(height);
         depth_desc.set_storage_mode(MTLStorageMode::Private);
         depth_desc.set_usage(MTLTextureUsage::RenderTarget);
-        let depth_texture = self.device.new_texture(&depth_desc);
-        depth_texture
+        depth_desc.set_texture_type(MTLTextureType::D2Multisample);
+        depth_desc.set_sample_count(4);
+        self.device.new_texture(&depth_desc)
+    }
+    fn update_msaa_texture(&mut self, width: u64, height: u64) {
+        let msaa_texture_desc = TextureDescriptor::new();
+        msaa_texture_desc.set_pixel_format(MTLPixelFormat::RGBA8Unorm);
+        msaa_texture_desc.set_width(width);
+        msaa_texture_desc.set_height(height);
+        msaa_texture_desc.set_storage_mode(MTLStorageMode::Private);
+        msaa_texture_desc.set_usage(MTLTextureUsage::RenderTarget);
+        msaa_texture_desc.set_texture_type(MTLTextureType::D2Multisample);
+        msaa_texture_desc.set_sample_count(4);
+        self.msaa_texture = self.device.new_texture(&msaa_texture_desc);
     }
 }
