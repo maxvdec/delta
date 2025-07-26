@@ -73,4 +73,4 @@ impl Object {
 }
 
 pub mod buffer;
-pub mod quad;
+pub mod primitives;

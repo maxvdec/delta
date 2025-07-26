@@ -110,7 +110,44 @@ pub fn create_rounded_quad(
     object.scale = Vec2::new(1.0, 1.0);
     object.original_pixel_size = Vec2::new(size.width, size.height);
     object.rotation = 0.0; // No rotation for a quad
-    object.corner_radius = corner_radius; // No corner radius for a simple quad
+    object.corner_radius = corner_radius;
+    object.update_buffer();
+    window.add_object(object);
+}
+
+pub fn create_circle(
+    window: &mut Window,
+    size: Size,
+    color: Color,
+    z_index: f32,
+    position: Position,
+) -> () {
+    let half_width = size.width / 2.0;
+    let half_height = size.height / 2.0;
+
+    let left = position.x - half_width;
+    let right = position.x + half_width;
+    let bottom = position.y - half_height;
+    let top = position.y + half_height;
+
+    let vertices = vec![
+        Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left
+        Vertex::new(right, bottom, z_index, color, Vec2::new(1.0, 0.0)), // Bottom-right
+        Vertex::new(right, top, z_index, color, Vec2::new(1.0, 1.0)),   // Top-right
+        Vertex::new(left, top, z_index, color, Vec2::new(0.0, 1.0)),    // Top-left
+    ];
+
+    let indices = vec![
+        0, 1, 2, // First triangle
+        0, 2, 3, // Second triangle
+    ];
+
+    let mut object = Object::new(vertices, indices);
+    object.position = Vec2::new(position.x, position.y);
+    object.scale = Vec2::new(1.0, 1.0);
+    object.original_pixel_size = Vec2::new(size.width, size.height);
+    object.rotation = 0.0;
+    object.corner_radius = half_height; // Use half height as corner radius for a circle
     object.update_buffer();
     window.add_object(object);
 }

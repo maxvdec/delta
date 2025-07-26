@@ -27,22 +27,54 @@ struct Uniforms {
 
 vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
     VertexOut out;
-
-    float depth = (0  + in.zIndex) / 50;
+    float depth = (0 + in.zIndex) / 50;
     out.position = uniforms.projection_matrix * uniforms.model_matrix * float4(in.position, depth, 1.0);
     out.color = in.color;
     out.uv = in.uv;
     return out;
 }
 
-fragment float4 fragment_main(VertexOut in [[stage_in]], constant Uniforms& uniforms [[buffer(0)]]) {
-    return float4(in.uv, 0.0, 1.0);
+float rounded_rect_sdf(float2 p, float2 size, float corner_radius) {
+    float2 d = abs(p) - size + corner_radius;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - corner_radius;
 }
-";
+
+fragment float4 fragment_main(VertexOut in [[stage_in]], constant Uniforms& uniforms [[buffer(0)]]) {
+    if (uniforms.corner_radius <= 0.0) {
+        return in.color;
+    }
+    
+    float2 local_pos = (in.uv - 0.5) * uniforms.rect_size;
+    
+    float2 half_size = uniforms.rect_size * 0.5;
+    
+    float dist = rounded_rect_sdf(local_pos, half_size, uniforms.corner_radius);
+    
+    float alpha = 1.0 - smoothstep(-1.0, 1.0, dist);
+    if (alpha <= 0.0) {
+        discard_fragment();
+    }
+    return float4(in.color.rgb, in.color.a * alpha);
+}";
 
 pub fn create_library(device: &Device) -> Library {
     match device.new_library_with_source(SHADERS, &CompileOptions::new()) {
         Ok(library) => library,
         Err(e) => panic!("Failed to create shader library: {}", e),
     }
+}
+
+pub fn setup_alpha_blending(pipeline_descriptor: &RenderPipelineDescriptorRef) {
+    let color_attachment = pipeline_descriptor
+        .color_attachments()
+        .object_at(0)
+        .unwrap();
+
+    color_attachment.set_blending_enabled(true);
+    color_attachment.set_source_rgb_blend_factor(MTLBlendFactor::SourceAlpha);
+    color_attachment.set_destination_rgb_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+    color_attachment.set_rgb_blend_operation(MTLBlendOperation::Add);
+    color_attachment.set_source_alpha_blend_factor(MTLBlendFactor::One);
+    color_attachment.set_destination_alpha_blend_factor(MTLBlendFactor::OneMinusSourceAlpha);
+    color_attachment.set_alpha_blend_operation(MTLBlendOperation::Add);
 }

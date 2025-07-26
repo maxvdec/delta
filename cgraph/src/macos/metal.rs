@@ -5,7 +5,10 @@ use std::mem::size_of;
 use winit::window::Window;
 
 use crate::{
-    macos::{shaders::create_library, view::setup_layer},
+    macos::{
+        shaders::{create_library, setup_alpha_blending},
+        view::setup_layer,
+    },
     object::{Object, Vertex},
     renderer::Renderer,
 };
@@ -46,6 +49,8 @@ impl Renderer for MetalRenderer {
             .set_pixel_format(MTLPixelFormat::RGBA8Unorm);
 
         pipeline_descriptor.set_depth_attachment_pixel_format(MTLPixelFormat::Depth32Float);
+
+        setup_alpha_blending(&pipeline_descriptor);
 
         // Enable depth testing
         let depth_stencil_descriptor = DepthStencilDescriptor::new();
@@ -245,12 +250,16 @@ impl Object {
 
         let projection = Mat4::orthographic_rh(left, right, bottom, top, near, far);
 
+        let rect_size = Vec2::new(
+            self.original_pixel_size.x * self.scale.x,
+            self.original_pixel_size.y * self.scale.y,
+        );
+
         let model_matrix = translation * rotation * scale;
         let uniforms = Uniforms {
             rect_position: Vec2::new(self.position.x, self.position.y),
-            rect_size: Vec2::new(2.0, 2.0),
-            corner_radius: self.corner_radius * 2.0
-                / self.original_pixel_size.x.min(self.original_pixel_size.y),
+            rect_size,
+            corner_radius: self.corner_radius,
             model_matrix,
             projection_matrix: projection,
         };
