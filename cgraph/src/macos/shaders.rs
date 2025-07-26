@@ -23,6 +23,7 @@ struct Uniforms {
     float corner_radius;
     float4x4 model_matrix;
     float4x4 projection_matrix;
+    bool use_texture;
 };
 
 vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
@@ -39,22 +40,33 @@ float rounded_rect_sdf(float2 p, float2 size, float corner_radius) {
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - corner_radius;
 }
 
-fragment float4 fragment_main(VertexOut in [[stage_in]], constant Uniforms& uniforms [[buffer(0)]]) {
-    if (uniforms.corner_radius <= 0.0) {
-        return in.color;
+fragment float4 fragment_main(VertexOut in [[stage_in]], 
+                             constant Uniforms& uniforms [[buffer(0)]],
+                             texture2d<float> tex [[texture(0)]],
+                             sampler texSampler [[sampler(0)]]) {
+    float4 final_color;
+    
+    if (uniforms.use_texture) {
+        float4 tex_color = tex.sample(texSampler, in.uv);
+        final_color = tex_color;
+    } else {
+        final_color = in.color;
     }
     
-    float2 local_pos = (in.uv - 0.5) * uniforms.rect_size;
-    
-    float2 half_size = uniforms.rect_size * 0.5;
-    
-    float dist = rounded_rect_sdf(local_pos, half_size, uniforms.corner_radius);
-    
-    float alpha = 1.0 - smoothstep(-1.0, 1.0, dist);
-    if (alpha <= 0.0) {
-        discard_fragment();
+    if (uniforms.corner_radius > 0.0) {
+        float2 local_pos = (in.uv - 0.5) * uniforms.rect_size;
+        float2 half_size = uniforms.rect_size * 0.5;
+        
+        float dist = rounded_rect_sdf(local_pos, half_size, uniforms.corner_radius);
+        
+        float alpha = 1.0 - smoothstep(-1.0, 1.0, dist);
+        if (alpha <= 0.0) {
+            discard_fragment();
+        }
+        final_color.a *= alpha;
     }
-    return float4(in.color.rgb, in.color.a * alpha);
+    
+    return final_color;
 }";
 
 pub fn create_library(device: &Device) -> Library {

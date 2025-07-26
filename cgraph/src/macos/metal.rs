@@ -22,6 +22,7 @@ pub struct MetalRenderer {
     depth_stencil_state: DepthStencilState,
     pub objects: Vec<crate::object::Object>,
     pub layer: MetalLayer,
+    sampler: SamplerState,
 }
 
 impl Renderer for MetalRenderer {
@@ -113,6 +114,15 @@ impl Renderer for MetalRenderer {
 
         let layer = setup_layer(device.as_ref(), window);
 
+        // Create a sampler for texture sampling
+        let sampler_descriptor = SamplerDescriptor::new();
+        sampler_descriptor.set_min_filter(MTLSamplerMinMagFilter::Linear);
+        sampler_descriptor.set_mag_filter(MTLSamplerMinMagFilter::Linear);
+        sampler_descriptor.set_mip_filter(MTLSamplerMipFilter::Linear);
+        sampler_descriptor.set_address_mode_s(MTLSamplerAddressMode::ClampToEdge);
+        sampler_descriptor.set_address_mode_t(MTLSamplerAddressMode::ClampToEdge);
+        let sampler = device.new_sampler(&sampler_descriptor);
+
         MetalRenderer {
             device,
             command_queue,
@@ -120,6 +130,7 @@ impl Renderer for MetalRenderer {
             depth_stencil_state,
             layer,
             objects: Vec::new(),
+            sampler,
         }
     }
 
@@ -169,6 +180,15 @@ impl Renderer for MetalRenderer {
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
+            
+            // Set texture and sampler if the object has a texture
+            if object.use_texture {
+                if let Some(ref texture) = object.texture {
+                    encoder.set_fragment_texture(0, Some(&texture.texture));
+                    encoder.set_fragment_sampler_state(0, Some(&self.sampler));
+                }
+            }
+            
             encoder.draw_indexed_primitives(
                 MTLPrimitiveType::Triangle,
                 object.indices.len() as u64,
@@ -229,6 +249,7 @@ struct Uniforms {
     corner_radius: f32,
     model_matrix: Mat4,
     projection_matrix: Mat4,
+    use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
 }
 
 impl Object {
@@ -262,6 +283,7 @@ impl Object {
             corner_radius: self.corner_radius,
             model_matrix,
             projection_matrix: projection,
+            use_texture: if self.use_texture { 1 } else { 0 },
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);

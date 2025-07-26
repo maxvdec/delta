@@ -40,6 +40,9 @@ impl Object {
             original_pixel_size: Vec2::new(1.0, 1.0),
             rotation: 0.0,
             corner_radius: 0.0,
+            #[cfg(target_os = "macos")]
+            texture: None,
+            use_texture: false,
         }
     }
 
@@ -49,5 +52,16 @@ impl Object {
 
     pub fn add_index(&mut self, index: u32) {
         self.indices.push(index);
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn with_texture(mut self, texture: crate::macos::image::Image) -> Self {
+        self.texture = Some(texture);
+        self.use_texture = true;
+        self
+    }
+
+    pub fn set_use_texture(&mut self, use_texture: bool) {
+        self.use_texture = use_texture;
     }
 }

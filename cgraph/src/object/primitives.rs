@@ -1,5 +1,4 @@
 use crate::{
-    app::Window,
     object::{Object, Vertex},
 };
 use glam::{Vec2, Vec4};
@@ -41,12 +40,11 @@ impl Position {
 pub type Color = Vec4;
 
 pub fn create_quad(
-    window: &mut Window,
     size: Size,
     color: Color,
     z_index: f32,
     position: Position,
-) -> () {
+) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
@@ -74,17 +72,16 @@ pub fn create_quad(
     object.rotation = 0.0; // No rotation for a quad
     object.corner_radius = 0.0; // No corner radius for a simple quad
     object.update_buffer();
-    window.add_object(object);
+    object
 }
 
 pub fn create_rounded_quad(
-    window: &mut Window,
     size: Size,
     color: Color,
     z_index: f32,
     position: Position,
     corner_radius: f32,
-) -> () {
+) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
@@ -112,16 +109,15 @@ pub fn create_rounded_quad(
     object.rotation = 0.0; // No rotation for a quad
     object.corner_radius = corner_radius;
     object.update_buffer();
-    window.add_object(object);
+    object
 }
 
 pub fn create_circle(
-    window: &mut Window,
     size: Size,
     color: Color,
     z_index: f32,
     position: Position,
-) -> () {
+) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
@@ -149,30 +145,29 @@ pub fn create_circle(
     object.rotation = 0.0;
     object.corner_radius = half_height; // Use half height as corner radius for a circle
     object.update_buffer();
-    window.add_object(object);
+    object
 }
 
 pub fn create_circle_with_radius(
-    window: &mut Window,
     radius: f32,
     color: Color,
     z_index: f32,
     position: Position,
-) -> () {
+) -> Object {
     let size = Size::new(radius * 2.0, radius * 2.0);
-    create_circle(window, size, color, z_index, position);
+    create_circle(size, color, z_index, position)
 }
 
 pub fn create_polygon(
-    window: &mut Window,
     size: Size,
     color: Color,
     z_index: f32,
     position: Position,
     faces: usize,
-) -> () {
+) -> Object {
     if faces < 3 {
-        return;
+        // Return a default empty object for invalid polygon
+        return Object::new(vec![], vec![]);
     }
 
     let radius = size.width.min(size.height) / 2.0;
@@ -211,5 +206,54 @@ pub fn create_polygon(
     object.rotation = 0.0;
     object.corner_radius = 0.0;
     object.update_buffer();
-    window.add_object(object);
+    object
+}
+
+// Textured object creation functions
+
+#[cfg(target_os = "macos")]
+pub fn create_textured_quad(
+    size: Size,
+    z_index: f32,
+    position: Position,
+    image_path: &str,
+) -> Result<Object, Box<dyn std::error::Error>> {
+    use crate::macos::image::Image;
+    
+    let image = Image::new(image_path)?;
+    let mut object = create_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position);
+    object = object.with_texture(image);
+    Ok(object)
+}
+
+#[cfg(target_os = "macos")]
+pub fn create_textured_quad_with_device(
+    size: Size,
+    z_index: f32,
+    position: Position,
+    image_path: &str,
+    device: &metal::Device,
+) -> Result<Object, Box<dyn std::error::Error>> {
+    use crate::macos::image::Image;
+    
+    let image = Image::new_from_device(image_path, device)?;
+    let mut object = create_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position);
+    object = object.with_texture(image);
+    Ok(object)
+}
+
+#[cfg(target_os = "macos")]
+pub fn create_textured_rounded_quad(
+    size: Size,
+    z_index: f32,
+    position: Position,
+    corner_radius: f32,
+    image_path: &str,
+) -> Result<Object, Box<dyn std::error::Error>> {
+    use crate::macos::image::Image;
+    
+    let image = Image::new(image_path)?;
+    let mut object = create_rounded_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position, corner_radius);
+    object = object.with_texture(image);
+    Ok(object)
 }

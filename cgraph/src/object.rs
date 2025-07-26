@@ -2,6 +2,9 @@ use glam::{Vec2, Vec4};
 
 use crate::object::buffer::Buffer;
 
+#[cfg(target_os = "macos")]
+use crate::macos::image::Image;
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct Vertex {
@@ -55,6 +58,10 @@ pub struct Object {
     pub original_pixel_size: Vec2,
     pub rotation: f32,
     pub corner_radius: f32,
+
+    #[cfg(target_os = "macos")]
+    pub texture: Option<Image>,
+    pub use_texture: bool,
 }
 
 impl Object {
