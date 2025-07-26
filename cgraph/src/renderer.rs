@@ -7,8 +7,8 @@ pub trait Renderer {
     fn new(window: &winit::window::Window) -> Self
     where
         Self: Sized;
-    fn render(&self, window: &winit::window::Window);
-    fn resize(&self, width: f64, height: f64);
+    fn render(&mut self, window: &winit::window::Window);
+    fn resize(&mut self, width: f64, height: f64);
     fn destroy(&self);
     fn add_object(&mut self, object: Object);
     fn clear(&mut self);
