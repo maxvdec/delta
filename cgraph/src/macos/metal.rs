@@ -121,7 +121,7 @@ impl Renderer for MetalRenderer {
 
     fn destroy(&self) {}
 
-    fn render(&self) {
+    fn render(&self, window: &winit::window::Window) {
         let command_buffer = self.command_queue.new_command_buffer();
         let drawable = self.layer.next_drawable().expect("Failed to get drawable");
 
@@ -154,6 +154,9 @@ impl Renderer for MetalRenderer {
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
             encoder.set_vertex_buffer(0, Some(&buffer), 0);
+            let uniform_buffer = object.make_uniforms(window);
+            encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
+            encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
             encoder.draw_indexed_primitives(
                 MTLPrimitiveType::Triangle,
                 object.indices.len() as u64,
@@ -197,6 +200,8 @@ fn set_vertex_descriptor(
         .set_buffer_index(0);
 }
 
+#[allow(dead_code)]
+#[derive(Debug)]
 struct Uniforms {
     rect_position: Vec2,
     rect_size: Vec2,
@@ -204,7 +209,40 @@ struct Uniforms {
     model_matrix: Mat4,
 }
 
-impl Object {}
+impl Object {
+    fn make_uniforms(
+        &self,
+        window: &winit::window::Window,
+    ) -> crate::object::buffer::Buffer<Uniforms> {
+        let window_width = window.inner_size().width as f32;
+        let window_height = window.inner_size().height as f32;
+
+        let translation =
+            Mat4::from_translation(Vec2::new(self.position[0], self.position[1]).extend(0.0));
+        let scale = Mat4::from_scale(Vec2::new(self.size[0], self.size[1]).extend(1.0));
+
+        let projection = Mat4::orthographic_rh(
+            -window_width / 2.0,  // left
+            window_width / 2.0,   // right
+            -window_height / 2.0, // bottom (note: flipped for screen coordinates)
+            window_height / 2.0,  // top
+            -1.0,                 // near
+            1.0,                  // far
+        );
+
+        let model_matrix = projection * translation * scale;
+
+        let uniforms = Uniforms {
+            rect_position: Vec2::new(self.position[0], self.position[1]),
+            rect_size: Vec2::new(self.size[0], self.size[1]),
+            corner_radius: self.corner_radius,
+            model_matrix,
+        };
+
+        println!("Final uniforms: {:?}", uniforms);
+        return crate::object::buffer::Buffer::new(vec![uniforms]);
+    }
+}
 
 impl MetalRenderer {
     fn set_depth(&self, width: u64, height: u64) -> Texture {

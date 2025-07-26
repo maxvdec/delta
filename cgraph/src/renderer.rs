@@ -1,3 +1,4 @@
+use crate::app::Window;
 use crate::object::buffer::Buffer;
 use crate::object::{Object, Vertex};
 
@@ -5,7 +6,7 @@ pub trait Renderer {
     fn new(window: &winit::window::Window) -> Self
     where
         Self: Sized;
-    fn render(&self);
+    fn render(&self, window: &winit::window::Window);
     fn resize(&self, width: f64, height: f64);
     fn destroy(&self);
     fn add_object(&mut self, object: Object);

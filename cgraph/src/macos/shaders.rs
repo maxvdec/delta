@@ -15,16 +15,23 @@ struct VertexOut {
     float4 color;
 };
 
-vertex VertexOut vertex_main(VertexIn in [[stage_in]]) {
+struct Uniforms {
+    float2 rect_position;
+    float2 rect_size;
+    float corner_radius;
+    float4x4 model_matrix;
+};
+
+vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
     VertexOut out;
 
     float depth = (0 + 50 - in.zIndex) / 50;
-    out.position = float4(in.position, depth, 1.0);
+    out.position = uniforms.model_matrix * float4(in.position, depth, 1.0);
     out.color = in.color;
     return out;
 }
 
-fragment float4 fragment_main(VertexOut in [[stage_in]]) {
+fragment float4 fragment_main(VertexOut in [[stage_in]], constant Uniforms& uniforms [[buffer(0)]]) {
     return in.color;
 }
 ";

@@ -71,6 +71,10 @@ pub fn create_quad(
     ];
 
     let mut object = Object::new(vertices, indices);
+    object.position = [position.x, position.y];
+    object.size = [size.width, size.height];
+    object.rotation = 0.0; // No rotation for a quad
+    object.corner_radius = 0.0; // No corner radius for a simple quad
     object.update_buffer();
     window.add_object(object);
 }
@@ -106,6 +110,10 @@ pub fn create_rounded_quad(
     ];
 
     let mut object = Object::new(vertices, indices);
+    object.position = [position.x, position.y];
+    object.size = [size.width, size.height];
+    object.rotation = 0.0; // No rotation for a quad
+    object.corner_radius = 0.0; // No corner radius for a simple quad
     object.update_buffer();
     window.add_object(object);
 }

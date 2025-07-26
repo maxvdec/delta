@@ -40,7 +40,10 @@ impl Window {
     }
 
     pub fn launch(self) -> () {
-        self.renderer.resize(self.width as f64, self.height as f64);
+        let mut renderer = self.renderer;
+        let window = self.window;
+
+        renderer.resize(self.width as f64, self.height as f64);
 
         self.event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
@@ -48,16 +51,16 @@ impl Window {
             match event {
                 Event::WindowEvent { event, .. } => match event {
                     WindowEvent::CloseRequested => {
-                        self.renderer.destroy();
+                        renderer.destroy();
                         *control_flow = ControlFlow::Exit;
                     }
                     _ => (),
                 },
                 Event::MainEventsCleared => {
-                    self.window.request_redraw();
+                    window.request_redraw();
                 }
                 Event::RedrawRequested(_) => {
-                    self.renderer.render();
+                    renderer.render(&window);
                 }
                 _ => (),
             }
