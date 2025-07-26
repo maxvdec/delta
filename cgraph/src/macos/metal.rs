@@ -76,6 +76,13 @@ impl Renderer for MetalRenderer {
             MTLVertexFormat::Float,
         );
 
+        set_vertex_descriptor(
+            vertex_descriptor,
+            offset_of!(Vertex, uv),
+            3,
+            MTLVertexFormat::Float2,
+        );
+
         vertex_descriptor
             .layouts()
             .object_at(0)
@@ -121,7 +128,7 @@ impl Renderer for MetalRenderer {
 
     fn destroy(&self) {}
 
-    fn render(&self, window: &winit::window::Window) {
+    fn render(&self, _window: &winit::window::Window) {
         let command_buffer = self.command_queue.new_command_buffer();
         let drawable = self.layer.next_drawable().expect("Failed to get drawable");
 
@@ -154,7 +161,7 @@ impl Renderer for MetalRenderer {
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
             encoder.set_vertex_buffer(0, Some(&buffer), 0);
-            let uniform_buffer = object.make_uniforms(&window);
+            let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
             encoder.draw_indexed_primitives(
@@ -210,27 +217,25 @@ fn set_vertex_descriptor(
 
 #[allow(dead_code)]
 #[derive(Debug)]
+#[repr(C)]
 struct Uniforms {
     rect_position: Vec2,
     rect_size: Vec2,
     corner_radius: f32,
     model_matrix: Mat4,
+    projection_matrix: Mat4,
 }
 
 impl Object {
-    fn make_uniforms(
-        &self,
-        window: &winit::window::Window,
-    ) -> crate::object::buffer::Buffer<Uniforms> {
+    fn make_uniforms(&self, layer: &MetalLayer) -> crate::object::buffer::Buffer<Uniforms> {
         let translation =
             Mat4::from_translation(Vec2::new(self.position.x, self.position.y).extend(0.0));
         let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));
 
         let rotation = Mat4::from_rotation_z(self.rotation);
 
-        let window_size = window.inner_size();
-        let width = window_size.width as f32;
-        let height = window_size.height as f32;
+        let width = layer.drawable_size().width as f32;
+        let height = layer.drawable_size().height as f32;
         let left = 0.0;
         let right = width;
         let top = 0.0;
@@ -240,13 +245,14 @@ impl Object {
 
         let projection = Mat4::orthographic_rh(left, right, bottom, top, near, far);
 
-        let model_matrix = projection * rotation * translation * scale;
-
+        let model_matrix = translation * rotation * scale;
         let uniforms = Uniforms {
             rect_position: Vec2::new(self.position.x, self.position.y),
-            rect_size: Vec2::new(self.scale.x, self.scale.y),
-            corner_radius: self.corner_radius,
+            rect_size: Vec2::new(2.0, 2.0),
+            corner_radius: self.corner_radius * 2.0
+                / self.original_pixel_size.x.min(self.original_pixel_size.y),
             model_matrix,
+            projection_matrix: projection,
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);

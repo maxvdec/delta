@@ -8,6 +8,7 @@ struct VertexIn {
     float2 position [[attribute(0)]];
     float4 color [[attribute(1)]];
     float zIndex [[attribute(2)]];
+    float2 uv [[attribute(3)]];
 };
 
 struct VertexOut {
@@ -21,20 +22,21 @@ struct Uniforms {
     float2 rect_size;
     float corner_radius;
     float4x4 model_matrix;
+    float4x4 projection_matrix;
 };
 
 vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
     VertexOut out;
 
-    float depth = (0 + 50 - in.zIndex) / 50;
-    out.position = float4(in.position, depth, 1.0);
+    float depth = (0  + in.zIndex) / 50;
+    out.position = uniforms.projection_matrix * uniforms.model_matrix * float4(in.position, depth, 1.0);
     out.color = in.color;
-    out.uv = (in.position - uniforms.rect_position) / uniforms.rect_size;
+    out.uv = in.uv;
     return out;
 }
 
 fragment float4 fragment_main(VertexOut in [[stage_in]], constant Uniforms& uniforms [[buffer(0)]]) {
-    return in.color;
+    return float4(in.uv, 0.0, 1.0);
 }
 ";
 

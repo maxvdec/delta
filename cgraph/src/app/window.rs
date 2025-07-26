@@ -6,7 +6,6 @@ use winit::{
 
 use crate::{app::SharedObjects, renderer::create_renderer};
 #[cfg(target_os = "macos")]
-
 pub struct Context {
     pub name: String,
     pub version: String,

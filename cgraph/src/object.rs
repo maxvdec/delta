@@ -8,6 +8,7 @@ pub struct Vertex {
     pub position: Vec2,
     pub color: Vec4,
     pub z_index: f32,
+    pub uv: Vec2,
 }
 
 impl Clone for Vertex {
@@ -16,6 +17,7 @@ impl Clone for Vertex {
             position: self.position,
             color: self.color,
             z_index: self.z_index,
+            uv: self.uv,
         }
     }
 }
@@ -26,14 +28,16 @@ impl Vertex {
             position: Vec2::new(0.0, 0.0),
             color: Vec4::new(1.0, 1.0, 1.0, 1.0),
             z_index: 0.0,
+            uv: Vec2::new(0.0, 0.0),
         }
     }
 
-    pub fn new(x: f32, y: f32, z_index: f32, color: Vec4) -> Self {
+    pub fn new(x: f32, y: f32, z_index: f32, color: Vec4, uv: Vec2) -> Self {
         Vertex {
             position: Vec2::new(x, y),
             color,
             z_index,
+            uv: uv,
         }
     }
 }

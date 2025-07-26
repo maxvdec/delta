@@ -47,22 +47,19 @@ pub fn create_quad(
     z_index: f32,
     position: Position,
 ) -> () {
-    let window_width = window.width as f32;
-    let window_height = window.height as f32;
-
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
-    let left = (position.x - half_width) / window_width * 2.0 - 1.0;
-    let right = (position.x + half_width) / window_width * 2.0 - 1.0;
-    let bottom = -((position.y - half_height) / window_height * 2.0 - 1.0); // Flip Y
-    let top = -((position.y + half_height) / window_height * 2.0 - 1.0); // Flip Y
+    let left = position.x - half_width;
+    let right = position.x + half_width;
+    let bottom = position.y - half_height;
+    let top = position.y + half_height;
 
     let vertices = vec![
-        Vertex::new(left, bottom, z_index, color), // Bottom-left (0)
-        Vertex::new(right, bottom, z_index, color), // Bottom-right (1)
-        Vertex::new(right, top, z_index, color),   // Top-right (2)
-        Vertex::new(left, top, z_index, color),    // Top-left (3)
+        Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left (0)
+        Vertex::new(right, bottom, z_index, color, Vec2::new(1.0, 0.0)), // Bottom-right (1)
+        Vertex::new(right, top, z_index, color, Vec2::new(1.0, 1.0)),   // Top-right (2)
+        Vertex::new(left, top, z_index, color, Vec2::new(0.0, 1.0)),    // Top-left (3)
     ];
 
     let indices = vec![
@@ -86,23 +83,21 @@ pub fn create_rounded_quad(
     color: Color,
     z_index: f32,
     position: Position,
+    corner_radius: f32,
 ) -> () {
-    let window_width = window.width as f32;
-    let window_height = window.height as f32;
-
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
-    let left = (position.x - half_width) / window_width * 2.0 - 1.0;
-    let right = (position.x + half_width) / window_width * 2.0 - 1.0;
-    let bottom = -((position.y - half_height) / window_height * 2.0 - 1.0); // Flip Y
-    let top = -((position.y + half_height) / window_height * 2.0 - 1.0); // Flip Y
+    let left = position.x - half_width;
+    let right = position.x + half_width;
+    let bottom = position.y - half_height;
+    let top = position.y + half_height;
 
     let vertices = vec![
-        Vertex::new(left, bottom, z_index, color),  // Bottom-left
-        Vertex::new(right, bottom, z_index, color), // Bottom-right
-        Vertex::new(right, top, z_index, color),    // Top-right
-        Vertex::new(left, top, z_index, color),     // Top-left
+        Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left
+        Vertex::new(right, bottom, z_index, color, Vec2::new(1.0, 0.0)), // Bottom-right
+        Vertex::new(right, top, z_index, color, Vec2::new(1.0, 1.0)),   // Top-right
+        Vertex::new(left, top, z_index, color, Vec2::new(0.0, 1.0)),    // Top-left
     ];
 
     let indices = vec![
@@ -115,7 +110,7 @@ pub fn create_rounded_quad(
     object.scale = Vec2::new(1.0, 1.0);
     object.original_pixel_size = Vec2::new(size.width, size.height);
     object.rotation = 0.0; // No rotation for a quad
-    object.corner_radius = 0.0; // No corner radius for a simple quad
+    object.corner_radius = corner_radius; // No corner radius for a simple quad
     object.update_buffer();
     window.add_object(object);
 }
