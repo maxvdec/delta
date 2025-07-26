@@ -1,6 +1,6 @@
 use cgraph::{
     app::Window,
-    get_object, get_objects,
+    get_object,
     object::quad::{Color, Position, Size, create_quad},
 };
 
