@@ -16,6 +16,10 @@ To consult our roadmap, click [here](https://github.com/maxvdec/projects/4).
 
 We plan to release in a point on the future. We want to make the IDE fast and powerful and every contribution will be appreciated.
 
+## Code of Conduct
+
+Check out the code of conduct for contributing [here](CODE_OF_CONDUCT.md)
+
 ## License
 
 The license is a pure MIT license.
