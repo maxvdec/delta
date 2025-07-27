@@ -15,7 +15,7 @@ fn main() {
     );
 
     object.shadow_radius = 20.0;
-    object.shadow_color = Color::new(0.0, 0.0, 0.0, 0.5);
+    object.shadow_color = Color::new(0.0, 0.0, 0.0, 0.2);
     object.shadow_on = true;
 
     let mut object2 = create_rounded_quad(
@@ -25,8 +25,8 @@ fn main() {
         Position::new(400.0, 300.0),
         20.0,
     );
-    object2.shadow_radius = 10.0;
-    object2.shadow_color = Color::new(0.0, 0.0, 0.0, 0.5);
+    object2.shadow_radius = 2.0;
+    object2.shadow_color = Color::new(0.0, 0.0, 0.0, 0.2);
     object2.shadow_offset = Vec2::new(0.0, 20.0);
     object2.shadow_on = true;
 
