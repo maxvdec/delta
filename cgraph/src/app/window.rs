@@ -12,6 +12,56 @@ pub struct Context {
     pub description: String,
 }
 
+pub enum CoreWindowEvent {
+    Resized(f64, f64), // x, y
+    Moved(f64, f64),   // x, y
+    Closing,
+    Destroyed,
+    DroppedFile(String), // path
+    HoveredFile(String), // path
+    HoveredFileCancelled,
+    Focused(bool),                                 // focused
+    RecievedChar(char),                            // character
+    KeyboardInput(winit::event::KeyboardInput),    // input
+    ModifierChanged(winit::event::ModifiersState), // modifiers
+    CursorMoved(u32, f64, f64),                    // device id, x, y
+    CursorEntered(u32),                            // device id
+    CursorLeft(u32),                               // device id
+    MouseScroll(
+        u32,
+        winit::event::MouseScrollDelta,
+        winit::event::TouchPhase,
+    ), // device id, delta, phase
+    MouseClick(u32, winit::event::MouseButton, winit::event::ElementState), // device id, button, state
+    TouchpadPressure(u32, f64),                                             // device id, pressure
+    AxisMotion(u32, winit::event::AxisId, f64), // device id, axis id, value
+    Touch(winit::event::Touch),                 // touch event
+    DPIChanged(f64, f64),                       // scale x, scale y
+    ThemeChanged(winit::window::Theme),         // theme
+    Occluded(bool),                             // occluded
+    #[cfg(target_os = "macos")]
+    ActivationTokenDone,
+}
+pub enum CoreDeviceEvent {
+    DeviceConnected,
+    DeviceDisconnected,
+    MouseMotion(f64, f64),
+    MouseWheel(f64, f64),
+    Motion(u32, f64),                        // axis, value
+    Button(u32, winit::event::ElementState), // button, state
+    Key(winit::event::KeyboardInput),        // input
+    Text(char),                              // codepoint
+}
+
+pub enum CoreEvent {
+    WindowEvent(CoreWindowEvent),
+    DeviceEvent(CoreDeviceEvent),
+    UserEvent,
+    AppSuspended,
+    AppResumed,
+    MemoryWarning,
+}
+
 type RenderFunction = dyn Fn(&mut winit::window::Window, &mut crate::macos::metal::MetalRenderer, &mut SharedObjects)
     + 'static;
 
