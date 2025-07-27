@@ -26,6 +26,14 @@ struct Uniforms {
     bool use_texture;
 };
 
+struct ShadowUniforms {
+    float offset_x;
+    float offset_y;
+    float radius;
+    float4 color;
+    bool enabled;
+};
+
 vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
     VertexOut out;
     float depth = (0 + in.zIndex) / 50;
@@ -40,10 +48,44 @@ float rounded_rect_sdf(float2 p, float2 size, float corner_radius) {
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - corner_radius;
 }
 
+float calculate_shadow_expanded(float2 uv, float2 original_rect_size, float corner_radius, float blur_radius) {
+    float expansion = blur_radius;
+    
+    float2 expanded_size = original_rect_size + float2(expansion * 2.0, expansion * 2.0);
+    
+    float2 expanded_pos = (uv - 0.5) * expanded_size;
+    
+    float2 half_original_size = original_rect_size * 0.5;
+    float dist = rounded_rect_sdf(expanded_pos, half_original_size, corner_radius);
+    
+    float shadow_alpha = 1.0 - smoothstep(-blur_radius, blur_radius, dist);
+    
+    return clamp(shadow_alpha, 0.0, 1.0);
+}
+
 fragment float4 fragment_main(VertexOut in [[stage_in]], 
                              constant Uniforms& uniforms [[buffer(0)]],
                              texture2d<float> tex [[texture(0)]],
-                             sampler texSampler [[sampler(0)]]) {
+                             sampler texSampler [[sampler(0)]],
+                             constant ShadowUniforms& shadowUniforms [[buffer(2)]]) {
+    
+    if (shadowUniforms.enabled) {
+        float shadow_alpha = calculate_shadow_expanded(
+            in.uv, 
+            uniforms.rect_size, 
+            uniforms.corner_radius, 
+            shadowUniforms.radius
+        );
+        
+        if (shadow_alpha <= 0.01) {
+            discard_fragment();
+        }
+        
+        float4 shadow_color = shadowUniforms.color;
+        shadow_color.a *= shadow_alpha;
+        return shadow_color;
+    }
+    
     float4 final_color;
     
     if (uniforms.use_texture) {

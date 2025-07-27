@@ -1,6 +1,4 @@
-use crate::{
-    object::{Object, Vertex},
-};
+use crate::object::{Object, Vertex};
 use glam::{Vec2, Vec4};
 
 pub struct Size {
@@ -39,12 +37,7 @@ impl Position {
 
 pub type Color = Vec4;
 
-pub fn create_quad(
-    size: Size,
-    color: Color,
-    z_index: f32,
-    position: Position,
-) -> Object {
+pub fn create_quad(size: Size, color: Color, z_index: f32, position: Position) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
@@ -112,12 +105,7 @@ pub fn create_rounded_quad(
     object
 }
 
-pub fn create_circle(
-    size: Size,
-    color: Color,
-    z_index: f32,
-    position: Position,
-) -> Object {
+pub fn create_circle(size: Size, color: Color, z_index: f32, position: Position) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
 
@@ -219,7 +207,7 @@ pub fn create_textured_quad(
     image_path: &str,
 ) -> Result<Object, Box<dyn std::error::Error>> {
     use crate::macos::image::Image;
-    
+
     let image = Image::new(image_path)?;
     let mut object = create_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position);
     object = object.with_texture(image);
@@ -235,7 +223,7 @@ pub fn create_textured_quad_with_device(
     device: &metal::Device,
 ) -> Result<Object, Box<dyn std::error::Error>> {
     use crate::macos::image::Image;
-    
+
     let image = Image::new_from_device(image_path, device)?;
     let mut object = create_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position);
     object = object.with_texture(image);
@@ -251,9 +239,60 @@ pub fn create_textured_rounded_quad(
     image_path: &str,
 ) -> Result<Object, Box<dyn std::error::Error>> {
     use crate::macos::image::Image;
-    
+
     let image = Image::new(image_path)?;
-    let mut object = create_rounded_quad(size, Vec4::new(1.0, 1.0, 1.0, 1.0), z_index, position, corner_radius);
+    let mut object = create_rounded_quad(
+        size,
+        Vec4::new(1.0, 1.0, 1.0, 1.0),
+        z_index,
+        position,
+        corner_radius,
+    );
     object = object.with_texture(image);
     Ok(object)
+}
+
+// Shadow helper functions
+
+pub fn create_quad_with_shadow(
+    size: Size,
+    color: Color,
+    z_index: f32,
+    position: Position,
+    shadow_radius: f32,
+    shadow_color: Color,
+    shadow_offset: Vec2,
+) -> Object {
+    let mut object = create_quad(size, color, z_index, position);
+    object.set_shadow(shadow_radius, shadow_color, shadow_offset);
+    object
+}
+
+pub fn create_rounded_quad_with_shadow(
+    size: Size,
+    color: Color,
+    z_index: f32,
+    position: Position,
+    corner_radius: f32,
+    shadow_radius: f32,
+    shadow_color: Color,
+    shadow_offset: Vec2,
+) -> Object {
+    let mut object = create_rounded_quad(size, color, z_index, position, corner_radius);
+    object.set_shadow(shadow_radius, shadow_color, shadow_offset);
+    object
+}
+
+pub fn create_circle_with_shadow(
+    size: Size,
+    color: Color,
+    z_index: f32,
+    position: Position,
+    shadow_radius: f32,
+    shadow_color: Color,
+    shadow_offset: Vec2,
+) -> Object {
+    let mut object = create_circle(size, color, z_index, position);
+    object.set_shadow(shadow_radius, shadow_color, shadow_offset);
+    object
 }

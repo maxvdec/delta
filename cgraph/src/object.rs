@@ -58,10 +58,44 @@ pub struct Object {
     pub original_pixel_size: Vec2,
     pub rotation: f32,
     pub corner_radius: f32,
+    pub shadow_radius: f32,
+    pub shadow_color: Vec4,
+    pub shadow_offset: Vec2,
+    pub shadow_on: bool,
+
+    pub shadow_buffer: Option<Buffer<Vertex>>,
+    pub shadow_index_buffer: Option<Buffer<u32>>,
+    pub shadow_dirty: bool,
 
     #[cfg(target_os = "macos")]
     pub texture: Option<Image>,
     pub use_texture: bool,
+}
+
+impl Clone for Object {
+    fn clone(&self) -> Self {
+        Object {
+            vertices: self.vertices.clone(),
+            indices: self.indices.clone(),
+            buffer: self.buffer.clone(),
+            index_buffer: self.index_buffer.clone(),
+            position: self.position,
+            scale: self.scale,
+            original_pixel_size: self.original_pixel_size,
+            rotation: self.rotation,
+            corner_radius: self.corner_radius,
+            shadow_radius: self.shadow_radius,
+            shadow_color: self.shadow_color,
+            shadow_offset: self.shadow_offset,
+            shadow_on: self.shadow_on,
+            shadow_buffer: self.shadow_buffer.clone(),
+            shadow_index_buffer: self.shadow_index_buffer.clone(),
+            shadow_dirty: self.shadow_dirty,
+            #[cfg(target_os = "macos")]
+            texture: self.texture.clone(),
+            use_texture: self.use_texture,
+        }
+    }
 }
 
 impl Object {

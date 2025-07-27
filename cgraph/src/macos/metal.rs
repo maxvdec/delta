@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec2};
+use glam::{Mat4, Vec2, Vec4};
 use memoffset::offset_of;
 use metal::*;
 use std::mem::size_of;
@@ -187,7 +187,7 @@ impl Renderer for MetalRenderer {
         color_attachment.set_texture(Some(&self.msaa_texture));
         color_attachment.set_load_action(MTLLoadAction::Clear);
         color_attachment.set_resolve_texture(Some(&drawable.texture()));
-        color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0)); // Blue background
+        color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0));
         color_attachment.set_store_action(MTLStoreAction::MultisampleResolve);
 
         let depth_attachment = render_pass_descriptor.depth_attachment().unwrap();
@@ -203,14 +203,43 @@ impl Renderer for MetalRenderer {
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
         encoder.set_cull_mode(MTLCullMode::None);
 
+        // First pass: Render shadows with expanded geometry
+        for object in &mut self.objects {
+            if object.shadow_on {
+                let shadow_buffer = object.get_shadow_buffer();
+                encoder.set_vertex_buffer(0, Some(&shadow_buffer.buffer), 0);
+
+                let shadow_uniform_buffer =
+                    object.make_shadow_position_uniforms_expanded(&self.layer);
+                encoder.set_vertex_buffer(1, Some(&shadow_uniform_buffer.buffer), 0);
+                encoder.set_fragment_buffer(0, Some(&shadow_uniform_buffer.buffer), 0);
+
+                let shadow_uniforms = object.make_shadow_uniforms_enabled();
+                encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
+
+                let shadow_index_buffer = object.get_shadow_index_buffer();
+                encoder.draw_indexed_primitives(
+                    MTLPrimitiveType::Triangle,
+                    shadow_index_buffer.data.len() as u64,
+                    MTLIndexType::UInt32,
+                    &shadow_index_buffer.buffer,
+                    0,
+                );
+            }
+        }
+
+        // Second pass: Render main objects
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
             encoder.set_vertex_buffer(0, Some(&buffer), 0);
+
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
 
-            // Set texture and sampler if the object has a texture
+            let shadow_uniforms = object.make_shadow_uniforms_disabled();
+            encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
+
             if object.use_texture {
                 if let Some(ref texture) = object.texture {
                     encoder.set_fragment_texture(0, Some(&texture.texture));
@@ -228,7 +257,6 @@ impl Renderer for MetalRenderer {
         }
 
         encoder.end_encoding();
-
         command_buffer.present_drawable(&drawable);
         command_buffer.commit();
     }
@@ -273,13 +301,15 @@ fn set_vertex_descriptor(
 #[allow(dead_code)]
 #[derive(Debug)]
 #[repr(C)]
-struct Uniforms {
-    rect_position: Vec2,
-    rect_size: Vec2,
-    corner_radius: f32,
-    model_matrix: Mat4,
-    projection_matrix: Mat4,
-    use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
+pub struct Uniforms {
+    pub rect_position: Vec2,
+    pub rect_size: Vec2,
+    pub corner_radius: f32,
+    pub model_matrix: Mat4,
+    pub projection_matrix: Mat4,
+    pub use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
+    pub shadow_radius: f32,
+    pub shadow_color: Vec4,
 }
 
 impl Object {
@@ -314,6 +344,8 @@ impl Object {
             model_matrix,
             projection_matrix: projection,
             use_texture: if self.use_texture { 1 } else { 0 },
+            shadow_radius: self.shadow_radius,
+            shadow_color: self.shadow_color,
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);

@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{Vec2, Vec4};
 
 use crate::object::buffer::Buffer;
 use crate::object::{Object, Vertex};
@@ -43,6 +43,13 @@ impl Object {
             #[cfg(target_os = "macos")]
             texture: None,
             use_texture: false,
+            shadow_radius: 0.0,
+            shadow_color: Vec4::new(0.0, 0.0, 0.0, 0.0),
+            shadow_offset: Vec2::new(0.0, 0.0),
+            shadow_on: false,
+            shadow_buffer: None,
+            shadow_index_buffer: None,
+            shadow_dirty: true,
         }
     }
 
@@ -63,5 +70,53 @@ impl Object {
 
     pub fn set_use_texture(&mut self, use_texture: bool) {
         self.use_texture = use_texture;
+    }
+
+    // Shadow configuration methods
+    pub fn with_shadow(mut self, radius: f32, color: Vec4, offset: Vec2) -> Self {
+        self.shadow_radius = radius;
+        self.shadow_color = color;
+        self.shadow_offset = offset;
+        self.shadow_on = true;
+        self.shadow_dirty = true;
+        self
+    }
+
+    pub fn set_shadow(&mut self, radius: f32, color: Vec4, offset: Vec2) {
+        self.shadow_radius = radius;
+        self.shadow_color = color;
+        self.shadow_offset = offset;
+        self.shadow_on = true;
+        self.shadow_dirty = true;
+    }
+
+    pub fn set_shadow_radius(&mut self, radius: f32) {
+        self.shadow_radius = radius;
+        self.shadow_dirty = true;
+    }
+
+    pub fn set_shadow_offset(&mut self, offset: Vec2) {
+        self.shadow_offset = offset;
+        self.shadow_dirty = true;
+    }
+
+    pub fn set_scale(&mut self, scale: Vec2) {
+        self.scale = scale;
+        self.shadow_dirty = true;
+    }
+
+    pub fn enable_shadow(&mut self) {
+        self.shadow_on = true;
+        self.shadow_dirty = true;
+    }
+
+    pub fn disable_shadow(&mut self) {
+        self.shadow_on = false;
+        self.shadow_dirty = true;
+    }
+
+    pub fn toggle_shadow(&mut self) {
+        self.shadow_on = !self.shadow_on;
+        self.shadow_dirty = true;
     }
 }

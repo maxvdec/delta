@@ -27,3 +27,12 @@ impl<T> Buffer<T> {
         );
     }
 }
+
+impl<T: Clone> Clone for Buffer<T> {
+    fn clone(&self) -> Self {
+        Buffer {
+            data: self.data.clone(),
+            buffer: self.buffer.clone(),
+        }
+    }
+}
