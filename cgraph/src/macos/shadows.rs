@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[repr(C)]
-pub struct ShadowUniforms {
+pub(crate) struct ShadowUniforms {
     pub offset_x: f32,
     pub offset_y: f32,
     pub radius: f32,
@@ -16,29 +16,29 @@ pub struct ShadowUniforms {
 }
 
 impl Object {
-    pub fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: self.shadow_offset.x,
             offset_y: self.shadow_offset.y,
             radius: self.shadow_radius,
             color: self.shadow_color,
-            enabled: 1, // Enable shadow rendering
+            enabled: true as u32, // Enable shadow rendering
         };
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    pub fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: 0.0,
             offset_y: 0.0,
             radius: 0.0,
             color: Vec4::new(0.0, 0.0, 0.0, 0.0),
-            enabled: 0, // Disable shadow rendering for main object
+            enabled: false as u32, // Disable shadow rendering for main object
         };
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    pub fn make_shadow_position_uniforms(
+    fn make_shadow_position_uniforms(
         &self,
         layer: &MetalLayer,
     ) -> crate::object::buffer::Buffer<Uniforms> {
@@ -49,17 +49,7 @@ impl Object {
         );
 
         let translation = Mat4::from_translation(shadow_position.extend(0.0));
-
-        // Scale shadow slightly larger for blur effect
-        let shadow_scale_factor = 1.0
-            + (self.shadow_radius / self.original_pixel_size.x.min(self.original_pixel_size.y))
-                * 0.3;
-        let shadow_scale = Vec2::new(
-            self.scale.x * shadow_scale_factor,
-            self.scale.y * shadow_scale_factor,
-        );
-        let scale = Mat4::from_scale(shadow_scale.extend(1.0));
-
+        let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));
         let rotation = Mat4::from_rotation_z(self.rotation);
 
         let width = layer.drawable_size().width as f32;
@@ -67,20 +57,19 @@ impl Object {
         let projection = Mat4::orthographic_rh(0.0, width, height, 0.0, -100.0, 100.0);
 
         let rect_size = Vec2::new(
-            self.original_pixel_size.x * shadow_scale.x,
-            self.original_pixel_size.y * shadow_scale.y,
+            self.original_pixel_size.x * self.scale.x,
+            self.original_pixel_size.y * self.scale.y,
         );
 
         let model_matrix = translation * rotation * scale;
-
         let uniforms = Uniforms {
             rect_position: shadow_position,
             rect_size,
             corner_radius: self.corner_radius,
             model_matrix,
             projection_matrix: projection,
-            use_texture: 0,                              // Shadows don't use textures
-            shadow_radius: 0.0,                          // Not used for shadow objects
+            use_texture: false as u32, // Shadows don't use textures
+            shadow_radius: 0.0,        // Not used for shadow objects
             shadow_color: Vec4::new(0.0, 0.0, 0.0, 0.0), // Not used for shadow objects
         };
 
@@ -89,29 +78,13 @@ impl Object {
 }
 
 impl MetalRenderer {
-    pub fn create_shadow_object(&self, object: &Object) -> Object {
+    fn create_shadow_object(&self, object: &Object) -> Object {
         let mut shadow_object = object.clone();
-
-        // Position shadow with offset
         shadow_object.position.x += object.shadow_offset.x;
         shadow_object.position.y += object.shadow_offset.y;
-
-        // Scale shadow slightly larger for blur effect
-        let shadow_scale_factor = 1.0
-            + (object.shadow_radius
-                / object
-                    .original_pixel_size
-                    .x
-                    .min(object.original_pixel_size.y))
-                * 0.5;
-        shadow_object.scale.x *= shadow_scale_factor;
-        shadow_object.scale.y *= shadow_scale_factor;
-
-        // Ensure shadow renders behind the main object
         for vertex in &mut shadow_object.vertices {
             vertex.z_index = object.vertices[0].z_index - 0.1;
         }
-
         shadow_object
     }
 }

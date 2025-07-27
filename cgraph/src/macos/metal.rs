@@ -23,7 +23,7 @@ pub struct MetalRenderer {
     depth_stencil_state: DepthStencilState,
     pub objects: Vec<crate::object::Object>,
     pub layer: MetalLayer,
-    pub sampler: SamplerState,
+    sampler: SamplerState,
     msaa_texture: Texture,
     depth_texture: Texture,
 }
@@ -204,17 +204,30 @@ impl Renderer for MetalRenderer {
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
         encoder.set_cull_mode(MTLCullMode::None);
 
-        // First pass: Render all shadows (behind objects)
         for object in &self.objects {
-            if object.shadow_on {
-                let shadow_object = self.create_shadow_object(object);
-                self.render_object(&encoder, &shadow_object, true);
-            }
-        }
+            let buffer = &object.get_buffer().buffer;
+            encoder.set_vertex_buffer(0, Some(&buffer), 0);
+            let uniform_buffer = object.make_uniforms(&self.layer);
+            encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
+            encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
+            let shadow_uniforms = object.make_shadow_uniforms();
+            encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
 
-        // Second pass: Render all main objects (in front of shadows)
-        for object in &self.objects {
-            self.render_object(&encoder, object, false);
+            // Set texture and sampler if the object has a texture
+            if object.use_texture {
+                if let Some(ref texture) = object.texture {
+                    encoder.set_fragment_texture(0, Some(&texture.texture));
+                    encoder.set_fragment_sampler_state(0, Some(&self.sampler));
+                }
+            }
+
+            encoder.draw_indexed_primitives(
+                MTLPrimitiveType::Triangle,
+                object.indices.len() as u64,
+                MTLIndexType::UInt32,
+                &object.get_index_buffer().buffer,
+                0,
+            );
         }
 
         encoder.end_encoding();
@@ -263,7 +276,7 @@ fn set_vertex_descriptor(
 #[allow(dead_code)]
 #[derive(Debug)]
 #[repr(C)]
-pub struct Uniforms {
+pub(crate) struct Uniforms {
     pub rect_position: Vec2,
     pub rect_size: Vec2,
     pub corner_radius: f32,
@@ -275,7 +288,7 @@ pub struct Uniforms {
 }
 
 impl Object {
-    pub fn make_uniforms(&self, layer: &MetalLayer) -> crate::object::buffer::Buffer<Uniforms> {
+    fn make_uniforms(&self, layer: &MetalLayer) -> crate::object::buffer::Buffer<Uniforms> {
         let translation =
             Mat4::from_translation(Vec2::new(self.position.x, self.position.y).extend(0.0));
         let scale = Mat4::from_scale(Vec2::new(self.scale.x, self.scale.y).extend(1.0));
@@ -311,6 +324,17 @@ impl Object {
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);
+    }
+
+    fn make_shadow_uniforms(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+        let shadow_uniforms = ShadowUniforms {
+            offset_x: self.shadow_offset.x,
+            offset_y: self.shadow_offset.y,
+            radius: self.shadow_radius,
+            color: self.shadow_color,
+            enabled: self.shadow_on as u32,
+        };
+        crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 }
 
