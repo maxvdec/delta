@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[repr(C)]
-pub(crate) struct ShadowUniforms {
+pub struct ShadowUniforms {
     pub offset_x: f32,
     pub offset_y: f32,
     pub radius: f32,
@@ -16,29 +16,29 @@ pub(crate) struct ShadowUniforms {
 }
 
 impl Object {
-    fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    pub fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: self.shadow_offset.x,
             offset_y: self.shadow_offset.y,
             radius: self.shadow_radius,
             color: self.shadow_color,
-            enabled: true as u32, // Enable shadow rendering
+            enabled: 1, // Enable shadow rendering
         };
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    pub fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: 0.0,
             offset_y: 0.0,
             radius: 0.0,
             color: Vec4::new(0.0, 0.0, 0.0, 0.0),
-            enabled: false as u32, // Disable shadow rendering for main object
+            enabled: 0, // Disable shadow rendering for main object
         };
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    fn make_shadow_position_uniforms(
+    pub fn make_shadow_position_uniforms(
         &self,
         layer: &MetalLayer,
     ) -> crate::object::buffer::Buffer<Uniforms> {
@@ -78,13 +78,26 @@ impl Object {
 }
 
 impl MetalRenderer {
-    fn create_shadow_object(&self, object: &Object) -> Object {
+    pub fn create_shadow_object(&self, object: &Object) -> Object {
         let mut shadow_object = object.clone();
+
         shadow_object.position.x += object.shadow_offset.x;
         shadow_object.position.y += object.shadow_offset.y;
+
+        let shadow_scale_factor = 1.0
+            + (object.shadow_radius
+                / object
+                    .original_pixel_size
+                    .x
+                    .min(object.original_pixel_size.y))
+                * 0.5;
+        shadow_object.scale.x *= shadow_scale_factor;
+        shadow_object.scale.y *= shadow_scale_factor;
+
         for vertex in &mut shadow_object.vertices {
             vertex.z_index = object.vertices[0].z_index - 0.1;
         }
+
         shadow_object
     }
 }
