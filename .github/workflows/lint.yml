@@ -15,5 +15,5 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-            - name: Build
-              run: cargo build --verbose
+            - name: Lint
+              run: cargo clippy --workspace --all-targets --all-features -- -D warnings
