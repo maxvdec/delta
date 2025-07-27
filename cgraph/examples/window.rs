@@ -1,6 +1,14 @@
-use cgraph::{self, app::Window};
+use cgraph::{
+    self,
+    app::{CoreEvent, CoreEventReference, CoreWindowEvent, Window},
+};
 
 fn main() {
-    let win = Window::new("Window", 800, 600);
+    let mut win = Window::new("Window", 800, 600);
+    win.on_event(CoreEventReference::WindowEvent, |_, event| {
+        if let CoreEvent::WindowEvent(CoreWindowEvent::KeyboardInput(input)) = event {
+            println!("Key pressed: {input:?}");
+        }
+    });
     win.launch();
 }
