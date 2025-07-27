@@ -1,6 +1,6 @@
 use metal::*;
 
-const SHADERS: &'static str = "
+const SHADERS: &str = "
 #include <metal_stdlib>
 using namespace metal;
 

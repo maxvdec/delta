@@ -268,18 +268,22 @@ pub fn create_quad_with_shadow(
     object
 }
 
+pub struct ShadowData {
+    pub radius: f32,
+    pub color: Color,
+    pub offset: Vec2,
+}
+
 pub fn create_rounded_quad_with_shadow(
     size: Size,
     color: Color,
     z_index: f32,
     position: Position,
     corner_radius: f32,
-    shadow_radius: f32,
-    shadow_color: Color,
-    shadow_offset: Vec2,
+    shadow_data: ShadowData,
 ) -> Object {
     let mut object = create_rounded_quad(size, color, z_index, position, corner_radius);
-    object.set_shadow(shadow_radius, shadow_color, shadow_offset);
+    object.set_shadow(shadow_data.radius, shadow_data.color, shadow_data.offset);
     object
 }
 
@@ -288,11 +292,9 @@ pub fn create_circle_with_shadow(
     color: Color,
     z_index: f32,
     position: Position,
-    shadow_radius: f32,
-    shadow_color: Color,
-    shadow_offset: Vec2,
+    shadow_data: ShadowData,
 ) -> Object {
     let mut object = create_circle(size, color, z_index, position);
-    object.set_shadow(shadow_radius, shadow_color, shadow_offset);
+    object.set_shadow(shadow_data.radius, shadow_data.color, shadow_data.offset);
     object
 }

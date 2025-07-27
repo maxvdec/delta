@@ -108,7 +108,7 @@ impl Renderer for MetalRenderer {
             .unwrap()
             .set_step_rate(1);
 
-        pipeline_descriptor.set_vertex_descriptor(Some(&vertex_descriptor));
+        pipeline_descriptor.set_vertex_descriptor(Some(vertex_descriptor));
 
         let state = match device.new_render_pipeline_state(&pipeline_descriptor) {
             Ok(state) => state,
@@ -186,7 +186,7 @@ impl Renderer for MetalRenderer {
 
         color_attachment.set_texture(Some(&self.msaa_texture));
         color_attachment.set_load_action(MTLLoadAction::Clear);
-        color_attachment.set_resolve_texture(Some(&drawable.texture()));
+        color_attachment.set_resolve_texture(Some(drawable.texture()));
         color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0));
         color_attachment.set_store_action(MTLStoreAction::MultisampleResolve);
 
@@ -196,9 +196,9 @@ impl Renderer for MetalRenderer {
         depth_attachment.set_clear_depth(1.0);
         depth_attachment.set_store_action(MTLStoreAction::DontCare);
 
-        render_pass_descriptor.set_depth_attachment(Some(&depth_attachment));
+        render_pass_descriptor.set_depth_attachment(Some(depth_attachment));
 
-        let encoder = command_buffer.new_render_command_encoder(&render_pass_descriptor);
+        let encoder = command_buffer.new_render_command_encoder(render_pass_descriptor);
         encoder.set_render_pipeline_state(&self.state);
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
         encoder.set_cull_mode(MTLCullMode::None);
@@ -231,7 +231,7 @@ impl Renderer for MetalRenderer {
         // Second pass: Render main objects
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
-            encoder.set_vertex_buffer(0, Some(&buffer), 0);
+            encoder.set_vertex_buffer(0, Some(buffer), 0);
 
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
@@ -257,7 +257,7 @@ impl Renderer for MetalRenderer {
         }
 
         encoder.end_encoding();
-        command_buffer.present_drawable(&drawable);
+        command_buffer.present_drawable(drawable);
         command_buffer.commit();
     }
 
@@ -348,7 +348,7 @@ impl Object {
             shadow_color: self.shadow_color,
         };
 
-        return crate::object::buffer::Buffer::new(vec![uniforms]);
+        crate::object::buffer::Buffer::new(vec![uniforms])
     }
 }
 

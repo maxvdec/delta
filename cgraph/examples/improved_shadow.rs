@@ -1,7 +1,7 @@
 use cgraph::{
     app::Window,
     object::primitives::{
-        Color, Position, Size, create_circle_with_shadow, create_quad_with_shadow,
+        Color, Position, ShadowData, Size, create_circle_with_shadow, create_quad_with_shadow,
         create_rounded_quad_with_shadow,
     },
 };
@@ -25,10 +25,12 @@ fn main() {
         Color::new(0.2, 0.8, 0.2, 1.0), // Green
         2.0,
         Position::new(500.0, 200.0),
-        25.0,                           // corner radius
-        20.0,                           // shadow radius
-        Color::new(0.0, 0.0, 0.0, 0.3), // Black shadow with 30% opacity
-        Vec2::new(8.0, 8.0),            // shadow offset
+        25.0, // corner radius
+        ShadowData {
+            radius: 20.0,                          // shadow radius
+            color: Color::new(0.0, 0.0, 0.0, 0.3), // Black shadow with 30% opacity
+            offset: Vec2::new(8.0, 8.0),
+        }, // shadow offset
     );
 
     let object3 = create_circle_with_shadow(
@@ -36,9 +38,11 @@ fn main() {
         Color::new(0.2, 0.2, 0.8, 1.0), // Blue
         3.0,
         Position::new(800.0, 200.0),
-        25.0,                           // shadow radius
-        Color::new(0.1, 0.1, 0.3, 0.5), // Dark blue shadow
-        Vec2::new(10.0, 10.0),          // shadow offset
+        ShadowData {
+            radius: 25.0,                          // shadow radius
+            color: Color::new(0.1, 0.1, 0.3, 0.5), // Dark blue shadow
+            offset: Vec2::new(10.0, 10.0),         // shadow offset
+        },
     );
 
     let object4 = cgraph::object::primitives::create_quad(
