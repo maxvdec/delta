@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::{Vec2, Vec4};
 
 use crate::object::buffer::Buffer;
 use crate::object::{Object, Vertex};
@@ -43,6 +43,10 @@ impl Object {
             #[cfg(target_os = "macos")]
             texture: None,
             use_texture: false,
+            shadow_radius: 0.0,
+            shadow_color: Vec4::new(0.0, 0.0, 0.0, 0.0),
+            shadow_offset: Vec2::new(0.0, 0.0),
+            shadow_on: false,
         }
     }
 

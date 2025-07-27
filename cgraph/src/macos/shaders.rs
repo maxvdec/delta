@@ -26,6 +26,14 @@ struct Uniforms {
     bool use_texture;
 };
 
+struct ShadowUniforms {
+    float offset_x;
+    float offset_y;
+    float radius;
+    float4 color;
+    bool enabled;
+};
+
 vertex VertexOut vertex_main(VertexIn in [[stage_in]], constant Uniforms& uniforms [[buffer(1)]]) {
     VertexOut out;
     float depth = (0 + in.zIndex) / 50;
@@ -40,10 +48,47 @@ float rounded_rect_sdf(float2 p, float2 size, float corner_radius) {
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - corner_radius;
 }
 
+float calculate_shadow(float2 uv, float2 rect_size, float corner_radius, float blur_radius, float2 shadow_offset) {
+    float2 local_pos = (uv - 0.5) * rect_size;
+    
+    local_pos -= shadow_offset;
+    
+    float2 half_size = rect_size * 0.5;
+    
+    float dist = rounded_rect_sdf(local_pos, half_size, corner_radius);
+    
+    float shadow_alpha = 1.0 - smoothstep(-blur_radius, blur_radius, dist);
+    
+    return clamp(shadow_alpha, 0.0, 1.0);
+}
+
 fragment float4 fragment_main(VertexOut in [[stage_in]], 
                              constant Uniforms& uniforms [[buffer(0)]],
                              texture2d<float> tex [[texture(0)]],
-                             sampler texSampler [[sampler(0)]]) {
+                             sampler texSampler [[sampler(0)]],
+                             constant ShadowUniforms& shadowUniforms [[buffer(2)]]) {
+    
+    if (shadowUniforms.enabled) {
+        float2 shadow_offset = float2(shadowUniforms.offset_x, shadowUniforms.offset_y);
+        
+        float shadow_alpha = calculate_shadow(
+            in.uv, 
+            uniforms.rect_size, 
+            uniforms.corner_radius, 
+            shadowUniforms.radius,
+            shadow_offset
+        );
+        
+        if (shadow_alpha <= 0.01) {
+            discard_fragment();
+        }
+        
+        float4 shadow_color = shadowUniforms.color;
+        shadow_color.a *= shadow_alpha;
+        return shadow_color;
+    }
+    
+    // Handle main objectrendering
     float4 final_color;
     
     if (uniforms.use_texture) {

@@ -97,3 +97,14 @@ impl Image {
         })
     }
 }
+
+impl Clone for Image {
+    fn clone(&self) -> Self {
+        Image {
+            source: self.source.clone(),
+            texture: self.texture.clone(),
+            width: self.width,
+            height: self.height,
+        }
+    }
+}

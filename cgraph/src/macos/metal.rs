@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec2};
+use glam::{Mat4, Vec2, Vec4};
 use memoffset::offset_of;
 use metal::*;
 use std::mem::size_of;
@@ -11,6 +11,7 @@ use crate::{
     },
     object::{Object, Vertex},
     renderer::Renderer,
+    shadows::ShadowUniforms,
 };
 
 use core_graphics_types::geometry::CGSize;
@@ -209,6 +210,8 @@ impl Renderer for MetalRenderer {
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
+            let shadow_uniforms = object.make_shadow_uniforms();
+            encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
 
             // Set texture and sampler if the object has a texture
             if object.use_texture {
@@ -273,13 +276,15 @@ fn set_vertex_descriptor(
 #[allow(dead_code)]
 #[derive(Debug)]
 #[repr(C)]
-struct Uniforms {
-    rect_position: Vec2,
-    rect_size: Vec2,
-    corner_radius: f32,
-    model_matrix: Mat4,
-    projection_matrix: Mat4,
-    use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
+pub(crate) struct Uniforms {
+    pub rect_position: Vec2,
+    pub rect_size: Vec2,
+    pub corner_radius: f32,
+    pub model_matrix: Mat4,
+    pub projection_matrix: Mat4,
+    pub use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
+    pub shadow_radius: f32,
+    pub shadow_color: Vec4,
 }
 
 impl Object {
@@ -314,9 +319,22 @@ impl Object {
             model_matrix,
             projection_matrix: projection,
             use_texture: if self.use_texture { 1 } else { 0 },
+            shadow_radius: self.shadow_radius,
+            shadow_color: self.shadow_color,
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);
+    }
+
+    fn make_shadow_uniforms(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+        let shadow_uniforms = ShadowUniforms {
+            offset_x: self.shadow_offset.x,
+            offset_y: self.shadow_offset.y,
+            radius: self.shadow_radius,
+            color: self.shadow_color,
+            enabled: self.shadow_on as u32,
+        };
+        crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 }
 
