@@ -16,12 +16,11 @@ fn main() {
 
     let shader_code_literal = shader_code.escape_default().to_string();
 
-    let mut file = File::create(&out_file).expect("Failed to create shader_code.rs");
+    let mut file = File::create(out_file).expect("Failed to create shader_code.rs");
     writeln!(
         file,
         "// Auto-generated from 'metal/' directory\n\
-         pub const SHADER_CODE: &str = \"{}\";",
-        shader_code_literal
+         pub const SHADER_CODE: &str = \"{shader_code_literal}\";"
     )
     .expect("Failed to write shader code to file");
 }
@@ -36,7 +35,7 @@ fn collect_shaders(dir: &Path, output: &mut String) {
         } else if let Some(ext) = path.extension() {
             if ext == "metal" {
                 let content = fs::read_to_string(&path)
-                    .unwrap_or_else(|_| panic!("Failed to read file {:?}", path));
+                    .unwrap_or_else(|_| panic!("Failed to read file {path:?}"));
                 output.push_str(&format!("// File: {}\n{}\n\n", path.display(), content));
             }
         }
