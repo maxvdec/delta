@@ -114,7 +114,7 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
 pub fn create_library(device: &Device) -> Library {
     match device.new_library_with_source(SHADERS, &CompileOptions::new()) {
         Ok(library) => library,
-        Err(e) => panic!("Failed to create shader library: {}", e),
+        Err(e) => panic!("Failed to create shader library: {e}"),
     }
 }
 

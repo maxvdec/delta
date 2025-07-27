@@ -112,7 +112,7 @@ impl Renderer for MetalRenderer {
 
         let state = match device.new_render_pipeline_state(&pipeline_descriptor) {
             Ok(state) => state,
-            Err(e) => panic!("Failed to create render pipeline state: {}", e),
+            Err(e) => panic!("Failed to create render pipeline state: {e}"),
         };
 
         let layer = setup_layer(device.as_ref(), window);
