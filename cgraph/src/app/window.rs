@@ -301,11 +301,7 @@ fn window_from_winit_event(event: &winit::event::WindowEvent) -> CoreWindowEvent
             device_id,
             position,
             ..
-        } => CoreWindowEvent::CursorMoved(
-            device_id_to_u32(device_id),
-            position.x as f64,
-            position.y as f64,
-        ),
+        } => CoreWindowEvent::CursorMoved(device_id_to_u32(device_id), position.x, position.y),
         WindowEvent::CursorEntered { device_id } => {
             CoreWindowEvent::CursorEntered(device_id_to_u32(device_id))
         }
@@ -323,7 +319,7 @@ fn window_from_winit_event(event: &winit::event::WindowEvent) -> CoreWindowEvent
             delta,
             phase,
             ..
-        } => CoreWindowEvent::MouseScroll(device_id_to_u32(device_id), delta.clone(), *phase),
+        } => CoreWindowEvent::MouseScroll(device_id_to_u32(device_id), *delta, *phase),
         WindowEvent::TouchpadPressure {
             device_id,
             pressure,
@@ -347,13 +343,11 @@ fn window_from_winit_event(event: &winit::event::WindowEvent) -> CoreWindowEvent
         WindowEvent::Focused(focused) => CoreWindowEvent::Focused(*focused),
         WindowEvent::ReceivedCharacter(character) => CoreWindowEvent::RecievedChar(*character),
         WindowEvent::KeyboardInput { input, .. } => CoreWindowEvent::KeyboardInput(*input),
-        WindowEvent::ModifiersChanged(modifiers) => {
-            CoreWindowEvent::ModifierChanged(modifiers.clone())
-        }
+        WindowEvent::ModifiersChanged(modifiers) => CoreWindowEvent::ModifierChanged(*modifiers),
         WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
             CoreWindowEvent::DPIChanged(*scale_factor, *scale_factor)
         }
-        WindowEvent::ThemeChanged(theme) => CoreWindowEvent::ThemeChanged(theme.clone()),
+        WindowEvent::ThemeChanged(theme) => CoreWindowEvent::ThemeChanged(*theme),
         WindowEvent::Occluded(occluded) => CoreWindowEvent::Occluded(*occluded),
 
         _ => CoreWindowEvent::Unknown,
@@ -370,14 +364,14 @@ fn device_from_winit_event(event: &winit::event::DeviceEvent) -> CoreDeviceEvent
                 CoreDeviceEvent::MouseWheel(x.abs() as f64, y.abs() as f64)
             }
             MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
-                CoreDeviceEvent::MouseWheel(x.abs() as f64, y.abs() as f64)
+                CoreDeviceEvent::MouseWheel(x.abs(), y.abs())
             }
         },
         winit::event::DeviceEvent::Motion { axis, value } => CoreDeviceEvent::Motion(*axis, *value),
         winit::event::DeviceEvent::Button { button, state } => {
             CoreDeviceEvent::Button(*button, *state)
         }
-        winit::event::DeviceEvent::Key(input) => CoreDeviceEvent::Key(input.clone()),
+        winit::event::DeviceEvent::Key(input) => CoreDeviceEvent::Key(*input),
         winit::event::DeviceEvent::Text { codepoint } => CoreDeviceEvent::Text(*codepoint),
 
         _ => CoreDeviceEvent::Unknown,

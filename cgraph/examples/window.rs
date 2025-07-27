@@ -5,14 +5,10 @@ use cgraph::{
 
 fn main() {
     let mut win = Window::new("Window", 800, 600);
-    win.on_event(CoreEventReference::WindowEvent, |_, event| match event {
-        CoreEvent::WindowEvent(event) => match event {
-            CoreWindowEvent::KeyboardInput(input) => {
-                println!("Key pressed: {:?}", input);
-            }
-            _ => (),
-        },
-        _ => (),
+    win.on_event(CoreEventReference::WindowEvent, |_, event| {
+        if let CoreEvent::WindowEvent(CoreWindowEvent::KeyboardInput(input)) = event {
+            println!("Key pressed: {input:?}");
+        }
     });
     win.launch();
 }
