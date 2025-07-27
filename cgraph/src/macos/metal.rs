@@ -187,7 +187,7 @@ impl Renderer for MetalRenderer {
         color_attachment.set_texture(Some(&self.msaa_texture));
         color_attachment.set_load_action(MTLLoadAction::Clear);
         color_attachment.set_resolve_texture(Some(&drawable.texture()));
-        color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0)); // Blue background
+        color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0));
         color_attachment.set_store_action(MTLStoreAction::MultisampleResolve);
 
         let depth_attachment = render_pass_descriptor.depth_attachment().unwrap();
@@ -203,24 +203,26 @@ impl Renderer for MetalRenderer {
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
         encoder.set_cull_mode(MTLCullMode::None);
 
-        // First pass: Render shadows for all objects that have shadows enabled
-        for object in &self.objects {
+        // First pass: Render shadows with expanded geometry
+        for object in &mut self.objects {
             if object.shadow_on {
-                let buffer = &object.get_buffer().buffer;
-                encoder.set_vertex_buffer(0, Some(&buffer), 0);
+                let shadow_buffer = object.get_shadow_buffer();
+                encoder.set_vertex_buffer(0, Some(&shadow_buffer.buffer), 0);
 
-                let shadow_uniform_buffer = object.make_shadow_position_uniforms(&self.layer);
+                let shadow_uniform_buffer =
+                    object.make_shadow_position_uniforms_expanded(&self.layer);
                 encoder.set_vertex_buffer(1, Some(&shadow_uniform_buffer.buffer), 0);
                 encoder.set_fragment_buffer(0, Some(&shadow_uniform_buffer.buffer), 0);
 
                 let shadow_uniforms = object.make_shadow_uniforms_enabled();
                 encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
 
+                let shadow_index_buffer = object.get_shadow_index_buffer();
                 encoder.draw_indexed_primitives(
                     MTLPrimitiveType::Triangle,
-                    object.indices.len() as u64,
+                    shadow_index_buffer.data.len() as u64,
                     MTLIndexType::UInt32,
-                    &object.get_index_buffer().buffer,
+                    &shadow_index_buffer.buffer,
                     0,
                 );
             }
@@ -255,7 +257,6 @@ impl Renderer for MetalRenderer {
         }
 
         encoder.end_encoding();
-
         command_buffer.present_drawable(&drawable);
         command_buffer.commit();
     }

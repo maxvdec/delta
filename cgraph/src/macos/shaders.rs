@@ -48,14 +48,15 @@ float rounded_rect_sdf(float2 p, float2 size, float corner_radius) {
     return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - corner_radius;
 }
 
-float calculate_shadow(float2 uv, float2 rect_size, float corner_radius, float blur_radius, float2 shadow_offset) {
-    float2 local_pos = (uv - 0.5) * rect_size;
+float calculate_shadow_expanded(float2 uv, float2 original_rect_size, float corner_radius, float blur_radius) {
+    float expansion = blur_radius;
     
-    local_pos -= shadow_offset;
+    float2 expanded_size = original_rect_size + float2(expansion * 2.0, expansion * 2.0);
     
-    float2 half_size = rect_size * 0.5;
+    float2 expanded_pos = (uv - 0.5) * expanded_size;
     
-    float dist = rounded_rect_sdf(local_pos, half_size, corner_radius);
+    float2 half_original_size = original_rect_size * 0.5;
+    float dist = rounded_rect_sdf(expanded_pos, half_original_size, corner_radius);
     
     float shadow_alpha = 1.0 - smoothstep(-blur_radius, blur_radius, dist);
     
@@ -69,14 +70,11 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
                              constant ShadowUniforms& shadowUniforms [[buffer(2)]]) {
     
     if (shadowUniforms.enabled) {
-        float2 shadow_offset = float2(shadowUniforms.offset_x, shadowUniforms.offset_y);
-        
-        float shadow_alpha = calculate_shadow(
+        float shadow_alpha = calculate_shadow_expanded(
             in.uv, 
             uniforms.rect_size, 
             uniforms.corner_radius, 
-            shadowUniforms.radius,
-            shadow_offset
+            shadowUniforms.radius
         );
         
         if (shadow_alpha <= 0.01) {
@@ -88,7 +86,6 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
         return shadow_color;
     }
     
-    // Handle main objectrendering
     float4 final_color;
     
     if (uniforms.use_texture) {

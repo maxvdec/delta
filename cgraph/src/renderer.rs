@@ -47,6 +47,9 @@ impl Object {
             shadow_color: Vec4::new(0.0, 0.0, 0.0, 0.0),
             shadow_offset: Vec2::new(0.0, 0.0),
             shadow_on: false,
+            shadow_buffer: None,
+            shadow_index_buffer: None,
+            shadow_dirty: true,
         }
     }
 
@@ -75,6 +78,7 @@ impl Object {
         self.shadow_color = color;
         self.shadow_offset = offset;
         self.shadow_on = true;
+        self.shadow_dirty = true;
         self
     }
 
@@ -83,29 +87,36 @@ impl Object {
         self.shadow_color = color;
         self.shadow_offset = offset;
         self.shadow_on = true;
+        self.shadow_dirty = true;
     }
 
     pub fn set_shadow_radius(&mut self, radius: f32) {
         self.shadow_radius = radius;
-    }
-
-    pub fn set_shadow_color(&mut self, color: Vec4) {
-        self.shadow_color = color;
+        self.shadow_dirty = true;
     }
 
     pub fn set_shadow_offset(&mut self, offset: Vec2) {
         self.shadow_offset = offset;
+        self.shadow_dirty = true;
+    }
+
+    pub fn set_scale(&mut self, scale: Vec2) {
+        self.scale = scale;
+        self.shadow_dirty = true;
     }
 
     pub fn enable_shadow(&mut self) {
         self.shadow_on = true;
+        self.shadow_dirty = true;
     }
 
     pub fn disable_shadow(&mut self) {
         self.shadow_on = false;
+        self.shadow_dirty = true;
     }
 
     pub fn toggle_shadow(&mut self) {
         self.shadow_on = !self.shadow_on;
+        self.shadow_dirty = true;
     }
 }

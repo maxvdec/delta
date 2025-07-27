@@ -63,6 +63,10 @@ pub struct Object {
     pub shadow_offset: Vec2,
     pub shadow_on: bool,
 
+    pub shadow_buffer: Option<Buffer<Vertex>>,
+    pub shadow_index_buffer: Option<Buffer<u32>>,
+    pub shadow_dirty: bool,
+
     #[cfg(target_os = "macos")]
     pub texture: Option<Image>,
     pub use_texture: bool,
@@ -84,6 +88,9 @@ impl Clone for Object {
             shadow_color: self.shadow_color,
             shadow_offset: self.shadow_offset,
             shadow_on: self.shadow_on,
+            shadow_buffer: self.shadow_buffer.clone(),
+            shadow_index_buffer: self.shadow_index_buffer.clone(),
+            shadow_dirty: self.shadow_dirty,
             #[cfg(target_os = "macos")]
             texture: self.texture.clone(),
             use_texture: self.use_texture,
