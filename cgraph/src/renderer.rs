@@ -68,4 +68,44 @@ impl Object {
     pub fn set_use_texture(&mut self, use_texture: bool) {
         self.use_texture = use_texture;
     }
+
+    // Shadow configuration methods
+    pub fn with_shadow(mut self, radius: f32, color: Vec4, offset: Vec2) -> Self {
+        self.shadow_radius = radius;
+        self.shadow_color = color;
+        self.shadow_offset = offset;
+        self.shadow_on = true;
+        self
+    }
+
+    pub fn set_shadow(&mut self, radius: f32, color: Vec4, offset: Vec2) {
+        self.shadow_radius = radius;
+        self.shadow_color = color;
+        self.shadow_offset = offset;
+        self.shadow_on = true;
+    }
+
+    pub fn set_shadow_radius(&mut self, radius: f32) {
+        self.shadow_radius = radius;
+    }
+
+    pub fn set_shadow_color(&mut self, color: Vec4) {
+        self.shadow_color = color;
+    }
+
+    pub fn set_shadow_offset(&mut self, offset: Vec2) {
+        self.shadow_offset = offset;
+    }
+
+    pub fn enable_shadow(&mut self) {
+        self.shadow_on = true;
+    }
+
+    pub fn disable_shadow(&mut self) {
+        self.shadow_on = false;
+    }
+
+    pub fn toggle_shadow(&mut self) {
+        self.shadow_on = !self.shadow_on;
+    }
 }

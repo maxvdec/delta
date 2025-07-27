@@ -11,7 +11,6 @@ use crate::{
     },
     object::{Object, Vertex},
     renderer::Renderer,
-    shadows::ShadowUniforms,
 };
 
 use core_graphics_types::geometry::CGSize;
@@ -204,16 +203,41 @@ impl Renderer for MetalRenderer {
         encoder.set_depth_stencil_state(&self.depth_stencil_state);
         encoder.set_cull_mode(MTLCullMode::None);
 
+        // First pass: Render shadows for all objects that have shadows enabled
+        for object in &self.objects {
+            if object.shadow_on {
+                let buffer = &object.get_buffer().buffer;
+                encoder.set_vertex_buffer(0, Some(&buffer), 0);
+
+                let shadow_uniform_buffer = object.make_shadow_position_uniforms(&self.layer);
+                encoder.set_vertex_buffer(1, Some(&shadow_uniform_buffer.buffer), 0);
+                encoder.set_fragment_buffer(0, Some(&shadow_uniform_buffer.buffer), 0);
+
+                let shadow_uniforms = object.make_shadow_uniforms_enabled();
+                encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
+
+                encoder.draw_indexed_primitives(
+                    MTLPrimitiveType::Triangle,
+                    object.indices.len() as u64,
+                    MTLIndexType::UInt32,
+                    &object.get_index_buffer().buffer,
+                    0,
+                );
+            }
+        }
+
+        // Second pass: Render main objects
         for object in &self.objects {
             let buffer = &object.get_buffer().buffer;
             encoder.set_vertex_buffer(0, Some(&buffer), 0);
+
             let uniform_buffer = object.make_uniforms(&self.layer);
             encoder.set_vertex_buffer(1, Some(&uniform_buffer.buffer), 0);
             encoder.set_fragment_buffer(0, Some(&uniform_buffer.buffer), 0);
-            let shadow_uniforms = object.make_shadow_uniforms();
+
+            let shadow_uniforms = object.make_shadow_uniforms_disabled();
             encoder.set_fragment_buffer(2, Some(&shadow_uniforms.buffer), 0);
 
-            // Set texture and sampler if the object has a texture
             if object.use_texture {
                 if let Some(ref texture) = object.texture {
                     encoder.set_fragment_texture(0, Some(&texture.texture));
@@ -276,7 +300,7 @@ fn set_vertex_descriptor(
 #[allow(dead_code)]
 #[derive(Debug)]
 #[repr(C)]
-pub(crate) struct Uniforms {
+pub struct Uniforms {
     pub rect_position: Vec2,
     pub rect_size: Vec2,
     pub corner_radius: f32,
@@ -324,17 +348,6 @@ impl Object {
         };
 
         return crate::object::buffer::Buffer::new(vec![uniforms]);
-    }
-
-    fn make_shadow_uniforms(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
-        let shadow_uniforms = ShadowUniforms {
-            offset_x: self.shadow_offset.x,
-            offset_y: self.shadow_offset.y,
-            radius: self.shadow_radius,
-            color: self.shadow_color,
-            enabled: self.shadow_on as u32,
-        };
-        crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 }
 

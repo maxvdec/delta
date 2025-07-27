@@ -1,13 +1,10 @@
 use glam::{Mat4, Vec2, Vec4};
 use metal::MetalLayer;
 
-use crate::{
-    metal::{MetalRenderer, Uniforms},
-    object::Object,
-};
+use crate::{macos::metal::Uniforms, object::Object};
 
 #[repr(C)]
-pub(crate) struct ShadowUniforms {
+pub struct ShadowUniforms {
     pub offset_x: f32,
     pub offset_y: f32,
     pub radius: f32,
@@ -16,7 +13,7 @@ pub(crate) struct ShadowUniforms {
 }
 
 impl Object {
-    fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    pub fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: self.shadow_offset.x,
             offset_y: self.shadow_offset.y,
@@ -27,7 +24,7 @@ impl Object {
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
+    pub fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: 0.0,
             offset_y: 0.0,
@@ -38,7 +35,7 @@ impl Object {
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
-    fn make_shadow_position_uniforms(
+    pub fn make_shadow_position_uniforms(
         &self,
         layer: &MetalLayer,
     ) -> crate::object::buffer::Buffer<Uniforms> {
@@ -74,17 +71,5 @@ impl Object {
         };
 
         crate::object::buffer::Buffer::new(vec![uniforms])
-    }
-}
-
-impl MetalRenderer {
-    fn create_shadow_object(&self, object: &Object) -> Object {
-        let mut shadow_object = object.clone();
-        shadow_object.position.x += object.shadow_offset.x;
-        shadow_object.position.y += object.shadow_offset.y;
-        for vertex in &mut shadow_object.vertices {
-            vertex.z_index = object.vertices[0].z_index - 0.1;
-        }
-        shadow_object
     }
 }
