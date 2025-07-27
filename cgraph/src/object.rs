@@ -26,7 +26,7 @@ impl Clone for Vertex {
 }
 
 impl Vertex {
-    pub fn default() -> Self {
+    pub fn create_default() -> Self {
         Vertex {
             position: Vec2::new(0.0, 0.0),
             color: Vec4::new(1.0, 1.0, 1.0, 1.0),
@@ -40,7 +40,7 @@ impl Vertex {
             position: Vec2::new(x, y),
             color,
             z_index,
-            uv: uv,
+            uv,
         }
     }
 }

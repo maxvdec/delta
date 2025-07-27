@@ -12,18 +12,15 @@ pub struct Context {
     pub description: String,
 }
 
+type RenderFunction = dyn Fn(&mut winit::window::Window, &mut crate::macos::metal::MetalRenderer, &mut SharedObjects)
+    + 'static;
+
 pub struct Window {
     pub title: String,
     pub width: u32,
     pub height: u32,
     #[cfg(target_os = "macos")]
-    pub update: Box<
-        dyn Fn(
-            &mut winit::window::Window,
-            &mut crate::macos::metal::MetalRenderer,
-            &mut SharedObjects,
-        ) -> (),
-    >,
+    pub update: Box<RenderFunction>,
     shared_objects: SharedObjects,
     renderer: Box<dyn crate::renderer::Renderer>,
     window: winit::window::Window,
@@ -57,8 +54,7 @@ impl Window {
                 &mut winit::window::Window,
                 &mut crate::macos::metal::MetalRenderer,
                 &mut SharedObjects,
-            ) -> ()
-            + 'static,
+            ) + 'static,
     {
         self.update = Box::new(update);
     }
@@ -67,7 +63,7 @@ impl Window {
         self.shared_objects.add_object(object);
     }
 
-    pub fn launch(mut self) -> () {
+    pub fn launch(mut self) {
         let mut window = self.window;
         let mut objects = self.shared_objects;
         let update = self.update;

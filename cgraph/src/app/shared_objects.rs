@@ -18,6 +18,12 @@ macro_rules! get_objects {
     };
 }
 
+impl Default for SharedObjects {
+    fn default() -> Self {
+        SharedObjects::new()
+    }
+}
+
 impl SharedObjects {
     pub fn new() -> Self {
         SharedObjects {
