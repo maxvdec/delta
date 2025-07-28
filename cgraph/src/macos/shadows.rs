@@ -7,15 +7,22 @@ use crate::{
 };
 
 #[repr(C)]
+/// Represents the uniforms used for shadow rendering in Metal.
 pub struct ShadowUniforms {
+    /// The x offset for the shadow position.
     pub offset_x: f32,
+    /// The y offset for the shadow position.
     pub offset_y: f32,
+    /// The radius of the shadow.
     pub radius: f32,
+    /// The color of the shadow.
     pub color: Vec4,
+    /// Whether the shadow is enabled.
     pub enabled: u32,
 }
 
 impl Object {
+    /// Creates the uniforms for shadow rendering.
     pub fn make_shadow_uniforms_enabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: self.shadow_offset.x,
@@ -27,6 +34,7 @@ impl Object {
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
+    /// Creates the uniforms for shadow rendering with disabled state.
     pub fn make_shadow_uniforms_disabled(&self) -> crate::object::buffer::Buffer<ShadowUniforms> {
         let shadow_uniforms = ShadowUniforms {
             offset_x: 0.0,
@@ -38,6 +46,7 @@ impl Object {
         crate::object::buffer::Buffer::new(vec![shadow_uniforms])
     }
 
+    /// Creates the uniforms for shadow rendering with offset position.
     pub fn make_shadow_position_uniforms(
         &self,
         layer: &MetalLayer,
@@ -78,6 +87,7 @@ impl Object {
 }
 
 impl Object {
+    /// Creates the geometry for the shadow based on the object's size and shadow properties.
     pub fn create_shadow_geometry(&self) -> (Vec<Vertex>, Vec<u32>) {
         let expansion = self.shadow_radius;
 
@@ -129,6 +139,7 @@ impl Object {
         (vertices, indices)
     }
 
+    /// Returns the shadow buffer, creating it if necessary.
     pub fn get_shadow_buffer(&mut self) -> &crate::object::buffer::Buffer<Vertex> {
         if self.shadow_buffer.is_none() || self.shadow_dirty {
             let (vertices, _) = self.create_shadow_geometry();
@@ -138,6 +149,7 @@ impl Object {
         self.shadow_buffer.as_ref().unwrap()
     }
 
+    /// Returns the shadow index buffer, creating it if necessary.
     pub fn get_shadow_index_buffer(&mut self) -> &crate::object::buffer::Buffer<u32> {
         if self.shadow_index_buffer.is_none() {
             let (_, indices) = self.create_shadow_geometry();
@@ -146,6 +158,7 @@ impl Object {
         self.shadow_index_buffer.as_ref().unwrap()
     }
 
+    /// Creates the shadow position uniforms for rendering.
     pub fn make_shadow_position_uniforms_expanded(
         &self,
         layer: &MetalLayer,

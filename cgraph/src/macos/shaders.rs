@@ -1,6 +1,7 @@
 use crate::macos::shader_code::SHADER_CODE;
 use metal::*;
 
+/// Creates a Metal library from the shader source code.
 pub fn create_library(device: &Device) -> Library {
     match device.new_library_with_source(SHADER_CODE, &CompileOptions::new()) {
         Ok(library) => library,
@@ -8,6 +9,7 @@ pub fn create_library(device: &Device) -> Library {
     }
 }
 
+/// Sets up alpha blending for the given render pipeline descriptor.
 pub fn setup_alpha_blending(pipeline_descriptor: &RenderPipelineDescriptorRef) {
     let color_attachment = pipeline_descriptor
         .color_attachments()

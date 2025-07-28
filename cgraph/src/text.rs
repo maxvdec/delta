@@ -8,11 +8,15 @@ use crate::{
     object::{Object, Vertex, primitives::Color},
 };
 
+/// Represents a font with its core font and transformation properties.
 pub struct Font {
+    /// The core font used for rendering text.
     pub core_font: cfont::font::load::Font,
+    /// The transformation properties for rendering text.
     pub transform: cfont::font::shape::TextTransform,
 }
 
+/// Retrieves a system font and creates a `Font` instance with the specified name and size.
 pub fn get_font(window: &Window, name: &str, size: f32) -> Result<Font, Box<dyn Error>> {
     let font = cfont::font::load::get_system_font(name)?;
     let transform = TextTransform {
@@ -26,6 +30,7 @@ pub fn get_font(window: &Window, name: &str, size: f32) -> Result<Font, Box<dyn 
     })
 }
 
+/// Creates a text object with the specified font, text, color, z-index, and position.
 pub fn make_text(
     font: Font,
     text: &str,

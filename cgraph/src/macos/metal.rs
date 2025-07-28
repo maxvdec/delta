@@ -15,16 +15,20 @@ use crate::{
 
 use core_graphics_types::geometry::CGSize;
 
+/// A Metal renderer for Core Graphics, providing rendering capabilities on macOS.
 pub struct MetalRenderer {
     device: Device,
     command_queue: CommandQueue,
     state: RenderPipelineState,
     depth_stencil_state: DepthStencilState,
+    /// The list of objects to render.
     pub objects: Vec<crate::object::Object>,
+    /// The Metal layer used for rendering.
     pub layer: MetalLayer,
     sampler: SamplerState,
     msaa_texture: Texture,
     depth_texture: Texture,
+    /// The background color for the renderer.
     pub background_color: Color,
 }
 
@@ -312,14 +316,23 @@ fn set_vertex_descriptor(
 #[allow(dead_code)]
 #[derive(Debug)]
 #[repr(C)]
+/// Uniforms for rendering objects in Metal.
 pub struct Uniforms {
+    /// The position of the rectangle in the scene.
     pub rect_position: Vec2,
+    /// The size of the rectangle in pixels.
     pub rect_size: Vec2,
+    /// The corner radius for rounded rectangles.
     pub corner_radius: f32,
+    /// The model matrix for transforming the rectangle.
     pub model_matrix: Mat4,
+    /// The projection matrix for rendering.
     pub projection_matrix: Mat4,
-    pub use_texture: u32, // Metal doesn't have native bool in uniforms, use u32
+    /// Whether to use a texture for rendering.
+    pub use_texture: u32,
+    /// The radius of the shadow.
     pub shadow_radius: f32,
+    /// The color of the shadow.
     pub shadow_color: Vec4,
 }
 

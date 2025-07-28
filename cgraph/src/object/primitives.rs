@@ -1,42 +1,56 @@
 use crate::object::{Object, Vertex};
 use glam::{Vec2, Vec4};
 
+/// Represents a size with width and height.
 pub struct Size {
+    /// The width of the size.
     pub width: f32,
+    /// The height of the size.
     pub height: f32,
 }
 
 impl Size {
+    /// Returns the width of the size.
     pub fn x(&self) -> f32 {
         self.width
     }
+    /// Returns the height of the size.
     pub fn y(&self) -> f32 {
         self.height
     }
+    /// Creates a new size with the given width and height.
     pub fn new(width: f32, height: f32) -> Self {
         Size { width, height }
     }
 }
 
+/// Represents a position with x and y coordinates.
 pub struct Position {
+    /// The x coordinate of the position.
     pub x: f32,
+    /// The y coordinate of the position.
     pub y: f32,
 }
 
 impl Position {
+    /// Returns the x coordinate of the position.
     pub fn x(&self) -> f32 {
         self.x
     }
+    /// Returns the y coordinate of the position.
     pub fn y(&self) -> f32 {
         self.y
     }
+    /// Creates a new position with the given x and y coordinates.
     pub fn new(x: f32, y: f32) -> Self {
         Position { x, y }
     }
 }
 
+/// Represents a color with red, green, blue, and alpha components.
 pub type Color = Vec4;
 
+/// Creates a new `Object` representing a quad with the given size, color, z-index, and position.
 pub fn create_quad(size: Size, color: Color, z_index: f32, position: Position) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
@@ -68,6 +82,7 @@ pub fn create_quad(size: Size, color: Color, z_index: f32, position: Position) -
     object
 }
 
+/// Creates a new `Object` representing a rounded quad with the given size, color, z-index, position, and corner radius.
 pub fn create_rounded_quad(
     size: Size,
     color: Color,
@@ -105,6 +120,7 @@ pub fn create_rounded_quad(
     object
 }
 
+/// Creates a new `Object` representing a circle with the given size, color, z-index, and position.
 pub fn create_circle(size: Size, color: Color, z_index: f32, position: Position) -> Object {
     let half_width = size.width / 2.0;
     let half_height = size.height / 2.0;
@@ -136,6 +152,7 @@ pub fn create_circle(size: Size, color: Color, z_index: f32, position: Position)
     object
 }
 
+/// Creates a new `Object` representing a circle with the given radius, color, z-index, and position.
 pub fn create_circle_with_radius(
     radius: f32,
     color: Color,
@@ -146,6 +163,7 @@ pub fn create_circle_with_radius(
     create_circle(size, color, z_index, position)
 }
 
+/// Creates a new `Object` representing a polygon with the given size, color, z-index, position, and number of faces.
 pub fn create_polygon(
     size: Size,
     color: Color,
@@ -200,6 +218,7 @@ pub fn create_polygon(
 // Textured object creation functions
 
 #[cfg(target_os = "macos")]
+/// Creates a new `Object` representing a textured quad with the given size, z-index, position, and image path.
 pub fn create_textured_quad(
     size: Size,
     z_index: f32,
@@ -215,6 +234,7 @@ pub fn create_textured_quad(
 }
 
 #[cfg(target_os = "macos")]
+/// Creates a new `Object` representing a textured rounded quad with the given size, z-index, position, corner radius, and image path.
 pub fn create_textured_quad_with_device(
     size: Size,
     z_index: f32,
@@ -231,6 +251,7 @@ pub fn create_textured_quad_with_device(
 }
 
 #[cfg(target_os = "macos")]
+/// Creates a new `Object` representing a textured rounded quad with the given size, z-index, position, corner radius, and image path.
 pub fn create_textured_rounded_quad(
     size: Size,
     z_index: f32,
@@ -253,7 +274,7 @@ pub fn create_textured_rounded_quad(
 }
 
 // Shadow helper functions
-
+/// Creates a new `Object` representing a quad with shadow properties.
 pub fn create_quad_with_shadow(
     size: Size,
     color: Color,
@@ -268,12 +289,17 @@ pub fn create_quad_with_shadow(
     object
 }
 
+/// Creates a new `Object` representing a rounded quad with shadow properties.
 pub struct ShadowData {
+    /// The radius of the shadow.
     pub radius: f32,
+    /// The color of the shadow.
     pub color: Color,
+    /// The offset of the shadow.
     pub offset: Vec2,
 }
 
+/// Creates a new `Object` representing a rounded quad with shadow properties.
 pub fn create_rounded_quad_with_shadow(
     size: Size,
     color: Color,
@@ -287,6 +313,7 @@ pub fn create_rounded_quad_with_shadow(
     object
 }
 
+/// Creates a new `Object` representing a circle with shadow properties.
 pub fn create_circle_with_shadow(
     size: Size,
     color: Color,
