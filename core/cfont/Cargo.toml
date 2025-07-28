@@ -1,0 +1,14 @@
+[package]
+name = "cfont"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/cfont.rs"
+
+[dependencies]
+font-kit = "0.11"
+rustybuzz = "0.20.1"
+lyon = { version = "1.0.1", features = ["extra"] }
+ttf-parser = "0.24"
+pathfinder_geometry = "*"

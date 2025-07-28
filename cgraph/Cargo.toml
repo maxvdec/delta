@@ -18,3 +18,4 @@ winit = "0.28.0"
 glam = "0.10"
 memoffset = "0.9"
 image = "0.25"
+cfont = { path = "../core/cfont" }
