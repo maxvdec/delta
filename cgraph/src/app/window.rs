@@ -7,7 +7,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::{app::SharedObjects, renderer::create_renderer};
+use crate::{app::SharedObjects, object::primitives::Color, renderer::create_renderer};
 #[cfg(target_os = "macos")]
 pub struct Context {
     pub name: String,
@@ -176,6 +176,7 @@ pub struct Window {
     pub height: u32,
     #[cfg(target_os = "macos")]
     pub update: Box<RenderFunction>,
+    pub background_color: Color,
     shared_objects: SharedObjects,
     renderer: Box<dyn crate::renderer::Renderer>,
     window: winit::window::Window,
@@ -224,13 +225,19 @@ impl Window {
             title: title.to_string(),
             width,
             height,
-            renderer: create_renderer(&window),
+            renderer: create_renderer(&window, Color::new(0.05, 0.05, 0.05, 1.0)),
             window,
             event_loop,
             update: Box::new(|_, _, _| ()),
             shared_objects: SharedObjects::new(),
             events: Vec::new(),
+            background_color: Color::new(0.05, 0.05, 0.05, 1.0),
         }
+    }
+
+    pub fn set_background_color(&mut self, color: Color) {
+        self.background_color = color;
+        self.renderer.set_background_color(color);
     }
 
     fn execute_event_static(
