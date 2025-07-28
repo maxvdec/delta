@@ -210,10 +210,7 @@ impl Window {
             .with_title(title)
             .with_inner_size(winit::dpi::LogicalSize::new(width, height));
         let cloned_options = options.clone();
-        window_builder = apply_window_options(
-            &window_builder,
-            &options.unwrap_or(WindowOptions::default()),
-        );
+        window_builder = apply_window_options(&window_builder, &options.unwrap_or_default());
 
         let window = window_builder
             .build(&event_loop)
