@@ -1,12 +1,16 @@
 #[cfg(target_os = "macos")]
 #[derive(Debug)]
+/// Represents a buffer for storing vertex data in Metal.
 pub struct Buffer<T> {
+    /// The data stored in the buffer.
     pub data: Vec<T>,
+    /// The Metal buffer object.
     pub buffer: metal::Buffer,
 }
 
 #[cfg(target_os = "macos")]
 impl<T> Buffer<T> {
+    /// Creates a new buffer with the given data.
     pub fn new(data: Vec<T>) -> Self {
         let device = metal::Device::system_default().expect("No Metal device found");
         let buffer = device.new_buffer_with_data(
@@ -17,6 +21,7 @@ impl<T> Buffer<T> {
         Buffer { data, buffer }
     }
 
+    /// Updates the buffer with new data.
     pub fn update(&mut self, data: Vec<T>) {
         self.data = data;
         let device = metal::Device::system_default().expect("No Metal device found");

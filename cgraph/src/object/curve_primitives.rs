@@ -4,6 +4,7 @@ use crate::object::{
     curve::{Curve, Path, Point},
 };
 
+/// Creates a quadratic Bezier curve object.
 pub fn create_quadratic_bezier(
     start: Position,
     control: Position,
@@ -31,13 +32,19 @@ pub fn create_quadratic_bezier(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Represents a control path for cubic Bezier curves.
 pub struct ControlPath {
+    /// The starting point of the cubic Bezier curve.
     pub start: Position,
+    /// The first control point of the cubic Bezier curve.
     pub control1: Position,
+    /// The second control point of the cubic Bezier curve.
     pub control2: Position,
+    /// The ending point of the cubic Bezier curve.
     pub end: Position,
 }
 
+/// Creates a cubic Bezier curve object.
 pub fn create_cubic_bezier(
     control: ControlPath,
     color: Color,
@@ -70,13 +77,19 @@ pub fn create_cubic_bezier(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Represents an arc defined by its center, radius, and angles.
 pub struct ArcAngle {
+    /// The center of the arc.
     pub center: Position,
+    /// The radius of the arc.
     pub radius: f32,
+    /// The starting angle of the arc in radians.
     pub start_angle: f32,
+    /// The ending angle of the arc in radians.
     pub end_angle: f32,
 }
 
+/// Creates an arc object.
 pub fn create_arc(
     arc: ArcAngle,
     color: Color,
@@ -100,6 +113,7 @@ pub fn create_arc(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Creates a full circle arc object.
 pub fn create_circle_arc(
     center: Position,
     radius: f32,
@@ -122,6 +136,7 @@ pub fn create_circle_arc(
     )
 }
 
+/// Creates a Catmull-Rom spline object.
 pub fn create_catmull_rom_spline(
     points: Vec<Position>,
     tension: f32,
@@ -151,6 +166,7 @@ pub fn create_catmull_rom_spline(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Creates a smooth path object from a series of points.
 pub fn create_smooth_path(
     points: Vec<Position>,
     color: Color,
@@ -193,6 +209,7 @@ pub fn create_smooth_path(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Creates a path object from a series of points.
 pub fn create_path_from_points(
     points: Vec<Position>,
     color: Color,
@@ -236,12 +253,15 @@ pub fn create_path_from_points(
     path.to_object(steps, color, z_index, line_width)
 }
 
+/// Represents a point in 2D space.
 pub struct PathBuilder {
     curves: Vec<Curve>,
     current_point: Option<Point>,
 }
 
+/// Builds a path using a series of curves.
 impl PathBuilder {
+    /// Creates a new PathBuilder instance.
     pub fn new() -> Self {
         PathBuilder {
             curves: Vec::new(),
@@ -249,6 +269,7 @@ impl PathBuilder {
         }
     }
 
+    /// Moves the current point to a new position.
     pub fn move_to(mut self, position: Position) -> Self {
         self.current_point = Some(Point {
             x: position.x,
@@ -257,6 +278,7 @@ impl PathBuilder {
         self
     }
 
+    /// Adds a line to the current point.
     pub fn line_to(mut self, position: Position) -> Self {
         if let Some(start) = self.current_point {
             let end = Point {
@@ -280,6 +302,7 @@ impl PathBuilder {
         self
     }
 
+    /// Adds a quadratic Bezier curve to the path.
     pub fn quadratic_to(mut self, control: Position, end: Position) -> Self {
         if let Some(start) = self.current_point {
             let curve = Curve::Quadratic {
@@ -297,6 +320,7 @@ impl PathBuilder {
         self
     }
 
+    /// Adds a cubic Bezier curve to the path.
     pub fn cubic_to(mut self, control1: Position, control2: Position, end: Position) -> Self {
         if let Some(start) = self.current_point {
             let curve = Curve::Cubic {
@@ -318,6 +342,7 @@ impl PathBuilder {
         self
     }
 
+    /// Adds an arc to the path.
     pub fn arc_to(
         mut self,
         center: Position,
@@ -344,6 +369,7 @@ impl PathBuilder {
         self
     }
 
+    /// Builds the path into an Object with specified color, z_index, line_width, and steps.
     pub fn build(self, color: Color, z_index: f32, line_width: f32, steps: usize) -> Object {
         let path = Path {
             curves: self.curves,
@@ -351,6 +377,7 @@ impl PathBuilder {
         path.to_object(steps, color, z_index, line_width)
     }
 
+    /// Builds the path into a Path object.
     pub fn build_path(self) -> Path {
         Path {
             curves: self.curves,
@@ -364,6 +391,7 @@ impl Default for PathBuilder {
     }
 }
 
+/// Creates a heart shape object.
 pub fn create_heart_shape(
     center: Position,
     size: f32,
@@ -399,13 +427,19 @@ pub fn create_heart_shape(
         .build(color, z_index, line_width, steps)
 }
 
+/// Represents a star shape with its center, outer radius, inner radius, and number of points.
 pub struct StarShape {
+    /// The center of the star.
     pub center: Position,
+    /// The outer radius of the star.
     pub outer_radius: f32,
+    /// The inner radius of the star.
     pub inner_radius: f32,
+    /// The number of points in the star.
     pub points: usize,
 }
 
+/// Creates a star shape object.
 pub fn create_star_shape(
     shape: StarShape,
     color: Color,

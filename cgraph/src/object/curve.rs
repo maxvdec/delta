@@ -2,37 +2,61 @@ use crate::object::{Object, Vertex};
 use glam::{Vec2, Vec4};
 
 #[derive(Clone, Debug, Copy)]
+/// Represents a point in 2D space.
 pub struct Point {
+    /// The x-coordinate of the point.
     pub x: f32,
+    /// The y-coordinate of the point.
     pub y: f32,
 }
 
+/// Represents a curve in 2D space.
 pub enum Curve {
+    /// A quadratic curve defined by three points.
     Quadratic {
+        /// The first control point.
         p0: Point,
+        /// The second control point.
         p1: Point,
+        /// The third control point.
         p2: Point,
     },
+    /// A cubic curve defined by four points.
     Cubic {
+        /// The first control point.
         p0: Point,
+        /// The second control point.
         p1: Point,
+        /// The third control point.
         p2: Point,
+        /// The fourth control point.
         p3: Point,
     },
+    /// An arc defined by a center point, radius, and angles.
     Arc {
+        /// The center of the arc.
         center: Point,
+        /// The radius of the arc.
         radius: f32,
+        /// The starting angle of the arc in radians.
         start_angle: f32,
+        /// The ending angle of the arc in radians.
         end_angle: f32,
     },
+    /// A Catmull-Rom spline defined by a set of points and tension.
     CatmullRom {
+        /// The control points of the spline.
         points: Vec<Point>,
+        /// The tension of the spline.
         tension: f32,
     },
 }
 
+/// Trait for evaluating curves at a given parameter t.
 pub trait CurveEval {
+    /// Evaluates the curve at a parameter t (0.0 to 1.0).
     fn evaluate(&self, t: f32) -> Point;
+    /// Returns a vector of points sampled from the curve.
     fn points(&self, steps: usize) -> Vec<Point> {
         (0..=steps)
             .map(|i| self.evaluate(i as f32 / steps as f32))
@@ -110,17 +134,21 @@ impl CurveEval for Curve {
     }
 }
 
+/// Represents a path made up of multiple curves.
 pub struct Path {
+    /// The curves that make up the path.
     pub curves: Vec<Curve>,
 }
 
 impl Path {
+    /// Creates a new path with the given curves.
     pub fn points(&self, steps: usize) -> Vec<Point> {
         self.curves.iter().flat_map(|c| c.points(steps)).collect()
     }
 }
 
 impl Curve {
+    /// Converts the curve to a vector of vertices for rendering.
     pub fn to_vertices(
         &self,
         steps: usize,
@@ -132,6 +160,7 @@ impl Curve {
         self.points_to_vertices(points, color, z_index, line_width)
     }
 
+    /// Converts the curve to a vector of vertices and indices for rendering as a line strip.
     pub fn to_line_vertices(
         &self,
         steps: usize,
@@ -277,6 +306,7 @@ impl Curve {
 }
 
 impl Path {
+    /// Converts the path to a vector of vertices for rendering.
     pub fn to_vertices(
         &self,
         steps: usize,
@@ -290,6 +320,7 @@ impl Path {
             .collect()
     }
 
+    /// Converts the path to a vector of vertices and indices for rendering as a line strip.
     pub fn to_line_vertices(
         &self,
         steps: usize,
@@ -316,6 +347,7 @@ impl Path {
         (all_vertices, all_indices)
     }
 
+    /// Converts the path to an `Object` for rendering.
     pub fn to_object(&self, steps: usize, color: Vec4, z_index: f32, line_width: f32) -> Object {
         let (vertices, indices) = self.to_line_vertices(steps, color, z_index, line_width);
         let mut object = Object::new(vertices, indices);
