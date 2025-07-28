@@ -1,10 +1,11 @@
 use glam::{Vec2, Vec4};
 
 use crate::object::buffer::Buffer;
+use crate::object::primitives::Color;
 use crate::object::{Object, Vertex};
 
 pub trait Renderer {
-    fn new(window: &winit::window::Window) -> Self
+    fn new(window: &winit::window::Window, background_color: Color) -> Self
     where
         Self: Sized;
     fn render(&mut self, window: &winit::window::Window);
@@ -15,12 +16,13 @@ pub trait Renderer {
     fn as_any(&self) -> &dyn std::any::Any;
     #[allow(dead_code)]
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
+    fn set_background_color(&mut self, background_color: Color);
 }
 
-pub fn create_renderer(window: &winit::window::Window) -> Box<dyn Renderer> {
+pub fn create_renderer(window: &winit::window::Window, color: Color) -> Box<dyn Renderer> {
     if cfg!(target_os = "macos") {
         use crate::macos::metal::MetalRenderer;
-        Box::new(MetalRenderer::new(window))
+        Box::new(MetalRenderer::new(window, color))
     } else {
         panic!("Unsupported platform");
     }

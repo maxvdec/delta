@@ -9,7 +9,7 @@ use crate::{
         shaders::{create_library, setup_alpha_blending},
         view::setup_layer,
     },
-    object::{Object, Vertex},
+    object::{Object, Vertex, primitives::Color},
     renderer::Renderer,
 };
 
@@ -25,10 +25,11 @@ pub struct MetalRenderer {
     sampler: SamplerState,
     msaa_texture: Texture,
     depth_texture: Texture,
+    pub background_color: Color,
 }
 
 impl Renderer for MetalRenderer {
-    fn new(window: &Window) -> Self
+    fn new(window: &Window, background_color: Color) -> Self
     where
         Self: Sized,
     {
@@ -158,6 +159,7 @@ impl Renderer for MetalRenderer {
             sampler,
             msaa_texture,
             depth_texture,
+            background_color,
         }
     }
 
@@ -170,6 +172,10 @@ impl Renderer for MetalRenderer {
     }
 
     fn destroy(&self) {}
+
+    fn set_background_color(&mut self, background_color: Color) {
+        self.background_color = background_color;
+    }
 
     fn render(&mut self, _window: &winit::window::Window) {
         let command_buffer = self.command_queue.new_command_buffer();
@@ -187,7 +193,12 @@ impl Renderer for MetalRenderer {
         color_attachment.set_texture(Some(&self.msaa_texture));
         color_attachment.set_load_action(MTLLoadAction::Clear);
         color_attachment.set_resolve_texture(Some(drawable.texture()));
-        color_attachment.set_clear_color(MTLClearColor::new(0.0, 0.5, 1.0, 1.0));
+        color_attachment.set_clear_color(MTLClearColor::new(
+            self.background_color[0] as f64,
+            self.background_color[1] as f64,
+            self.background_color[2] as f64,
+            self.background_color[3] as f64,
+        ));
         color_attachment.set_store_action(MTLStoreAction::MultisampleResolve);
 
         let depth_attachment = render_pass_descriptor.depth_attachment().unwrap();
