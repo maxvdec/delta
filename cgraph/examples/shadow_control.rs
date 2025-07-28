@@ -5,7 +5,7 @@ use cgraph::{
 use glam::Vec2;
 
 fn main() {
-    let mut win = Window::new("Dynamic Shadow Control", 800, 600);
+    let mut win = Window::new("Dynamic Shadow Control", 800, 600, None);
 
     let mut object = create_quad(
         Size::new(200.0, 200.0),

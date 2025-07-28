@@ -8,7 +8,7 @@ use cgraph::{
 use glam::Vec2;
 
 fn main() {
-    let mut win = Window::new("Improved Shadows", 1200, 800);
+    let mut win = Window::new("Improved Shadows", 1200, 800, None);
 
     let object1 = create_quad_with_shadow(
         Size::new(200.0, 150.0),

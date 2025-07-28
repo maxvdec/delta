@@ -4,7 +4,7 @@ use cgraph::{
 };
 
 fn main() {
-    let mut win = Window::new("Quad", 800, 600);
+    let mut win = Window::new("Quad", 800, 600, None);
 
     let mut object = create_quad(
         Size::new(1000.0, 1000.0),

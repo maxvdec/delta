@@ -6,12 +6,15 @@ edition = "2024"
 [lib]
 path = "src/cgraph.rs"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2"
+raw-window-handle = "0.5"
+cocoa = "0.24"
+metal = "0.25"
+core-graphics-types = "0.1"
+
 [dependencies]
 winit = "0.28.0"
-metal = "0.25"
-objc = "0.2"
-cocoa = "0.24"
-core-graphics-types = "0.1"
 glam = "0.10"
 memoffset = "0.9"
 image = "0.25"
