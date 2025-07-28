@@ -114,4 +114,5 @@ impl Object {
 }
 
 pub mod buffer;
+pub mod curve;
 pub mod primitives;
