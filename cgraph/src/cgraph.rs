@@ -1,5 +1,6 @@
 pub mod app;
 pub mod object;
+pub mod text;
 
 pub mod renderer;
 mod utils;
