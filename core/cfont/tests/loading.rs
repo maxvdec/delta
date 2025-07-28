@@ -1,16 +1,12 @@
-use cfont::font::load;
+use cfont::font::load::get_system_font;
 
 #[test]
-fn test_load_font() {
-    load::load_system_font("Arial").unwrap();
+fn load_font() {
+    assert!(get_system_font("Arial").is_ok());
 }
 
 #[test]
-fn should_fail() {
-    let result = load::load_font("ThisFontDoesNotExist");
-    assert!(
-        result.is_err(),
-        "Expected an error when loading a non-existent font: {}",
-        result.unwrap_err()
-    );
+fn has_core_font() {
+    let font = get_system_font("Arial").unwrap();
+    assert!(font.core_font.is_some());
 }
