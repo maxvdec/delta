@@ -30,6 +30,7 @@ We assume you know how to fork a repo and get started with modifying Delta. Besi
 
 After the prefix, put a short description. Starting by the 'package prefix'. Here's a list of them:
 * `cg` is for **Core Graphics**
+* `cf` is for **Core Font**
 
 For example, a branch fixing a bug in the rendering of Core Graphics, would be: `fix/cg_rendering`. Thanks for keeping the repo clean and organized.
 

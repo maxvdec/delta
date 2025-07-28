@@ -34,3 +34,4 @@ The license is a pure MIT license.
 
 Here's a list of the different packages and what they do in Delta:
 * [`cgraph`](./cgraph/) is **Core Graphics**, it handles the low-level drawing of shapes, shadows and images.
+* [`cfont`](./core/cfont/) is **Core Font**, it handles font importing and rasterization of fonts.
