@@ -11,24 +11,34 @@ use pathfinder_geometry::vector::Vector2F;
 use rustybuzz::{Face, UnicodeBuffer};
 
 #[derive(Debug)]
+/// Represents a vertex in the text geometry.
 pub struct TextVertex {
+    /// The position of the vertex in 2D space.
     pub position: [f32; 2],
 }
 
 #[derive(Debug)]
+/// Represents the geometry of a text shape.
 pub struct TextGeometry {
+    /// The vertices of the text geometry.
     pub vertices: Vec<TextVertex>,
+    /// The indices of the vertices for indexed rendering.
     pub indices: Vec<u16>,
 }
 
 #[derive(Debug, Clone)]
+/// Represents a transformation for text rendering.
 pub struct TextTransform {
-    pub font_size: f32,        // Desired font size in pixels
-    pub position: [f32; 2],    // Position in pixels [x, y]
+    /// Desired font size in pixels.
+    pub font_size: f32, // Desired font size in pixels
+    /// Position in pixels [x, y]
+    pub position: [f32; 2], // Position in pixels [x, y]
+    /// Canvas size in pixels [width, height]
     pub canvas_size: [f32; 2], // Canvas size in pixels [width, height]
 }
 
 impl TextGeometry {
+    /// Creates a new `TextGeometry` from the given vertices and indices.
     pub fn bounding_box(&self) -> (f32, f32, f32, f32) {
         if self.vertices.is_empty() {
             return (0.0, 0.0, 0.0, 0.0);
@@ -50,6 +60,7 @@ impl TextGeometry {
         (min_x, min_y, max_x, max_y)
     }
 
+    /// Transforms the text geometry to fit within the specified canvas size.
     pub fn transform_to_canvas(&mut self, transform: TextTransform, font_units_per_em: f32) {
         let (min_x, min_y, _, _) = self.bounding_box();
 
@@ -71,6 +82,7 @@ impl TextGeometry {
         }
     }
 
+    /// Normalizes the vertex positions to fit within the canvas size.
     pub fn normalize_to_canvas(&mut self, canvas_size: [f32; 2]) {
         for vertex in &mut self.vertices {
             vertex.position[0] /= canvas_size[0];
@@ -78,6 +90,7 @@ impl TextGeometry {
         }
     }
 
+    /// Returns the pixel dimensions of the text geometry.
     pub fn pixel_dimensions(&self) -> (f32, f32) {
         let (min_x, min_y, max_x, max_y) = self.bounding_box();
         (max_x - min_x, max_y - min_y)
@@ -129,6 +142,7 @@ impl OutlineSink for PathBuilderSink {
     }
 }
 
+/// Produces a `TextGeometry` from the given font and text string.
 pub fn produce_text(font: Font, text: &str) -> Result<TextGeometry, Box<dyn Error>> {
     let cfont_font = font.clone();
     let face: Result<Face<'_>, Box<dyn Error>> =
