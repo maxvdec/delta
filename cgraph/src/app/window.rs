@@ -86,6 +86,90 @@ struct EventDelegate {
 type RenderFunction = dyn Fn(&mut winit::window::Window, &mut crate::macos::metal::MetalRenderer, &mut SharedObjects)
     + 'static;
 
+pub struct WindowOptions {
+    decorations: bool,
+    resizable: bool,
+    transparent: bool,
+    fullscreen: bool,
+    no_titlebar: bool,
+}
+
+impl Clone for WindowOptions {
+    fn clone(&self) -> Self {
+        WindowOptions {
+            decorations: self.decorations,
+            resizable: self.resizable,
+            transparent: self.transparent,
+            fullscreen: self.fullscreen,
+            no_titlebar: self.no_titlebar,
+        }
+    }
+}
+
+impl Default for WindowOptions {
+    fn default() -> Self {
+        WindowOptions {
+            decorations: true,
+            resizable: true,
+            transparent: false,
+            fullscreen: false,
+            no_titlebar: false,
+        }
+    }
+}
+
+impl WindowOptions {
+    pub fn no_decorations() -> Self {
+        WindowOptions {
+            decorations: false,
+            resizable: true,
+            transparent: false,
+            fullscreen: false,
+            no_titlebar: false,
+        }
+    }
+
+    pub fn resizable() -> Self {
+        WindowOptions {
+            decorations: true,
+            resizable: true,
+            transparent: false,
+            fullscreen: false,
+            no_titlebar: false,
+        }
+    }
+
+    pub fn transparent() -> Self {
+        WindowOptions {
+            decorations: true,
+            resizable: true,
+            transparent: true,
+            fullscreen: false,
+            no_titlebar: false,
+        }
+    }
+
+    pub fn fullscreen() -> Self {
+        WindowOptions {
+            decorations: true,
+            resizable: true,
+            transparent: false,
+            fullscreen: true,
+            no_titlebar: false,
+        }
+    }
+
+    pub fn no_titlebar() -> Self {
+        WindowOptions {
+            decorations: true,
+            resizable: true,
+            transparent: false,
+            fullscreen: false,
+            no_titlebar: true,
+        }
+    }
+}
+
 pub struct Window {
     pub title: String,
     pub width: u32,
@@ -99,14 +183,43 @@ pub struct Window {
     events: Vec<EventDelegate>,
 }
 
+fn apply_window_options(
+    window: &winit::window::WindowBuilder,
+    options: &WindowOptions,
+) -> winit::window::WindowBuilder {
+    let mut builder = window.clone();
+    if !options.decorations {
+        builder = builder.with_decorations(false);
+    }
+    if !options.resizable {
+        builder = builder.with_resizable(false);
+    }
+    if options.transparent {
+        builder = builder.with_transparent(true);
+    }
+    if options.fullscreen {
+        builder = builder.with_fullscreen(Some(winit::window::Fullscreen::Borderless(None)));
+    }
+    builder
+}
+
 impl Window {
-    pub fn new(title: &str, width: u32, height: u32) -> Self {
+    pub fn new(title: &str, width: u32, height: u32, options: Option<WindowOptions>) -> Self {
         let event_loop = EventLoop::new();
-        let window = WindowBuilder::new()
+        let mut window_builder = WindowBuilder::new()
             .with_title(title)
-            .with_inner_size(winit::dpi::LogicalSize::new(width, height))
+            .with_inner_size(winit::dpi::LogicalSize::new(width, height));
+        let cloned_options = options.clone();
+        window_builder = apply_window_options(&window_builder, &options.unwrap_or_default());
+
+        let window = window_builder
             .build(&event_loop)
             .expect("Cannot create window");
+
+        if cloned_options.is_some() && cloned_options.unwrap().no_titlebar {
+            #[cfg(target_os = "macos")]
+            crate::macos::win_custom::customize_window(&window);
+        }
         Window {
             title: title.to_string(),
             width,
