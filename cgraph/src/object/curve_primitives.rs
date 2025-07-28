@@ -31,11 +31,15 @@ pub fn create_quadratic_bezier(
     path.to_object(steps, color, z_index, line_width)
 }
 
+pub struct ControlPath {
+    pub start: Position,
+    pub control1: Position,
+    pub control2: Position,
+    pub end: Position,
+}
+
 pub fn create_cubic_bezier(
-    start: Position,
-    control1: Position,
-    control2: Position,
-    end: Position,
+    control: ControlPath,
     color: Color,
     z_index: f32,
     line_width: f32,
@@ -43,18 +47,21 @@ pub fn create_cubic_bezier(
 ) -> Object {
     let curve = Curve::Cubic {
         p0: Point {
-            x: start.x,
-            y: start.y,
+            x: control.start.x,
+            y: control.start.y,
         },
         p1: Point {
-            x: control1.x,
-            y: control1.y,
+            x: control.control1.x,
+            y: control.control1.y,
         },
         p2: Point {
-            x: control2.x,
-            y: control2.y,
+            x: control.control2.x,
+            y: control.control2.y,
         },
-        p3: Point { x: end.x, y: end.y },
+        p3: Point {
+            x: control.end.x,
+            y: control.end.y,
+        },
     };
 
     let path = Path {
@@ -63,11 +70,15 @@ pub fn create_cubic_bezier(
     path.to_object(steps, color, z_index, line_width)
 }
 
+pub struct ArcAngle {
+    pub center: Position,
+    pub radius: f32,
+    pub start_angle: f32,
+    pub end_angle: f32,
+}
+
 pub fn create_arc(
-    center: Position,
-    radius: f32,
-    start_angle: f32,
-    end_angle: f32,
+    arc: ArcAngle,
     color: Color,
     z_index: f32,
     line_width: f32,
@@ -75,12 +86,12 @@ pub fn create_arc(
 ) -> Object {
     let curve = Curve::Arc {
         center: Point {
-            x: center.x,
-            y: center.y,
+            x: arc.center.x,
+            y: arc.center.y,
         },
-        radius,
-        start_angle,
-        end_angle,
+        radius: arc.radius,
+        start_angle: arc.start_angle,
+        end_angle: arc.end_angle,
     };
 
     let path = Path {
@@ -98,10 +109,12 @@ pub fn create_circle_arc(
     steps: usize,
 ) -> Object {
     create_arc(
-        center,
-        radius,
-        0.0,
-        2.0 * std::f32::consts::PI,
+        ArcAngle {
+            center,
+            radius,
+            start_angle: 0.0,
+            end_angle: 2.0 * std::f32::consts::PI,
+        },
         color,
         z_index,
         line_width,
@@ -386,38 +399,42 @@ pub fn create_heart_shape(
         .build(color, z_index, line_width, steps)
 }
 
+pub struct StarShape {
+    pub center: Position,
+    pub outer_radius: f32,
+    pub inner_radius: f32,
+    pub points: usize,
+}
+
 pub fn create_star_shape(
-    center: Position,
-    outer_radius: f32,
-    inner_radius: f32,
-    points: usize,
+    shape: StarShape,
     color: Color,
     z_index: f32,
     line_width: f32,
     steps: usize,
 ) -> Object {
-    if points < 3 {
+    if shape.points < 3 {
         return Object::new(vec![], vec![]);
     }
 
     let mut builder = PathBuilder::new();
-    let angle_step = std::f32::consts::PI / points as f32;
+    let angle_step = std::f32::consts::PI / shape.points as f32;
 
     // Start at the first outer point
     let start_angle = -std::f32::consts::PI / 2.0; // Start at top
-    let start_x = center.x + outer_radius * start_angle.cos();
-    let start_y = center.y + outer_radius * start_angle.sin();
+    let start_x = shape.center.x + shape.outer_radius * start_angle.cos();
+    let start_y = shape.center.y + shape.outer_radius * start_angle.sin();
     builder = builder.move_to(Position::new(start_x, start_y));
 
-    for i in 0..points * 2 {
+    for i in 0..shape.points * 2 {
         let angle = start_angle + (i as f32 * angle_step);
         let radius = if i % 2 == 0 {
-            inner_radius
+            shape.inner_radius
         } else {
-            outer_radius
+            shape.outer_radius
         };
-        let x = center.x + radius * angle.cos();
-        let y = center.y + radius * angle.sin();
+        let x = shape.center.x + radius * angle.cos();
+        let y = shape.center.y + radius * angle.sin();
         builder = builder.line_to(Position::new(x, y));
     }
 
