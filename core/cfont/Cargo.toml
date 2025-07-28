@@ -7,3 +7,4 @@ edition = "2024"
 path = "src/cfont.rs"
 
 [dependencies]
+font-kit = "0.13"
