@@ -2,14 +2,20 @@ use metal::*;
 use std::path::Path;
 
 #[derive(Debug)]
+/// Represents an image in the Metal graphics system.
 pub struct Image {
+    /// The source path of the image.
     pub source: String,
+    /// The Metal texture representing the image.
     pub texture: metal::Texture,
+    /// The width of the image in pixels.
     pub width: u32,
+    /// The height of the image in pixels.
     pub height: u32,
 }
 
 impl Image {
+    /// Creates a new Image from a file path.
     pub fn new(source: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let device = metal::Device::system_default().expect("No Metal device found");
 
@@ -53,6 +59,7 @@ impl Image {
         })
     }
 
+    /// Creates a new Image from a file path using a specific Metal device.
     pub fn new_from_device(
         source: &str,
         device: &metal::Device,

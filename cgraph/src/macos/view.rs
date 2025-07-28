@@ -9,6 +9,7 @@ use metal::{DeviceRef, MetalLayer};
 use objc::{msg_send, *};
 use winit::{platform::macos::WindowExtMacOS, window::Window};
 
+/// Sets up the Metal layer for the given window and device.
 pub fn setup_layer(device: &DeviceRef, window: &Window) -> MetalLayer {
     let ns_view = window.ns_view() as id;
 

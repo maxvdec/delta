@@ -1,6 +1,7 @@
 #![allow(unexpected_cfgs)]
 
 #[cfg(target_os = "macos")]
+/// Customizes the window for macOS, setting title visibility and style.
 pub fn customize_window(window: &winit::window::Window) {
     use cocoa::appkit::{NSWindowStyleMask, NSWindowTitleVisibility};
     use cocoa::base::id;
