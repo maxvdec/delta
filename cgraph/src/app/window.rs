@@ -197,9 +197,8 @@ fn apply_window_options(
     if options.transparent {
         builder = builder.with_transparent(true);
     }
-
     if options.fullscreen {
-        // Fullscreen logic can be added here
+        builder = builder.with_fullscreen(Some(winit::window::Fullscreen::Borderless(None)));
     }
     builder
 }
