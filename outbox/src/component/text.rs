@@ -123,11 +123,13 @@ impl Renderable for Text {
     ) -> Vec<cgraph::object::Object> {
         let mut transform = self.font_transform.clone();
         transform.canvas_size = canvas_size;
-        transform.position = assigned_position;
+        transform.position = [0.0, 0.0];
+
         let cfont = cgraph::text::Font {
             core_font: self.font.clone(),
             transform,
         };
+
         let object = make_text(
             cfont,
             &self.content,
