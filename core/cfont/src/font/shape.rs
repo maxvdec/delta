@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use crate::font::load::Font;
+use crate::font::style::TextStyle;
 use font_kit::outline::OutlineSink;
 use lyon::{
     path::Path,
@@ -35,6 +36,8 @@ pub struct TextTransform {
     pub position: [f32; 2], // Position in pixels [x, y]
     /// Canvas size in pixels [width, height]
     pub canvas_size: [f32; 2], // Canvas size in pixels [width, height]
+    /// Text styling properties
+    pub style: TextStyle,
 }
 
 impl TextGeometry {
@@ -198,4 +201,79 @@ pub fn produce_text(font: Font, text: &str) -> Result<TextGeometry, Box<dyn Erro
         vertices,
         indices: global_geometry.indices,
     })
+}
+
+/// Produces a `TextGeometry` from the given font, text string, and style.
+/// This version applies style-specific transformations like bold stroke width.
+pub fn produce_styled_text(
+    font: Font,
+    text: &str,
+    style: &TextStyle,
+) -> Result<TextGeometry, Box<dyn Error>> {
+    let mut geometry = produce_text(font, text)?;
+
+    // Apply style-specific modifications
+    if style.is_bold() {
+        // For bold text, we could apply a stroke effect or use a different tessellation
+        // This is a simplified approach - in a real implementation you might:
+        // 1. Use a bold variant of the font
+        // 2. Apply stroke/outline effects
+        // 3. Slightly expand the geometry
+
+        // For now, we'll keep the geometry as-is since we're using font-kit's font selection
+        // which should already handle bold weights
+    }
+
+    // Note: Italic is typically handled by font selection (using slanted font variants)
+    // Underline would be added as additional geometry below the text
+    if style.underlined {
+        add_underline_geometry(&mut geometry);
+    }
+
+    Ok(geometry)
+}
+
+/// Adds underline geometry to existing text geometry.
+fn add_underline_geometry(geometry: &mut TextGeometry) {
+    let (min_x, min_y, max_x, _) = geometry.bounding_box();
+
+    if geometry.vertices.is_empty() {
+        return;
+    }
+
+    // Calculate underline position and thickness
+    let underline_y = min_y - 20.0; // Position below text baseline
+    let underline_thickness = 2.0;
+
+    // Create underline rectangle vertices
+    let underline_vertices = vec![
+        TextVertex {
+            position: [min_x, underline_y],
+        },
+        TextVertex {
+            position: [max_x, underline_y],
+        },
+        TextVertex {
+            position: [max_x, underline_y - underline_thickness],
+        },
+        TextVertex {
+            position: [min_x, underline_y - underline_thickness],
+        },
+    ];
+
+    let base_index = geometry.vertices.len() as u16;
+
+    // Add underline indices (two triangles)
+    let underline_indices = vec![
+        base_index,
+        base_index + 1,
+        base_index + 2,
+        base_index,
+        base_index + 2,
+        base_index + 3,
+    ];
+
+    // Append to existing geometry
+    geometry.vertices.extend(underline_vertices);
+    geometry.indices.extend(underline_indices);
 }

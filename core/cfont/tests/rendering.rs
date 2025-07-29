@@ -1,6 +1,7 @@
 use cfont::font::{
     load::get_system_font,
     shape::{TextTransform, produce_text},
+    style::TextStyle,
 };
 
 #[test]
@@ -32,6 +33,7 @@ fn render_text() {
         font_size: 48.0,             // 48px font
         position: [100.0, 200.0],    // Position at 100px from left, 200px from top
         canvas_size: [800.0, 600.0], // 800x600 canvas
+        style: TextStyle::bold(),
     };
 
     result.transform_to_canvas(transform.clone(), font_units_per_em);
