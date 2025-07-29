@@ -1,11 +1,14 @@
 use cgraph::app::WindowOptions;
 
+use crate::renderable::Renderable;
+
 pub struct Window {
     pub title: String,
     pub width: u32,
     pub height: u32,
     window: Option<cgraph::app::Window>,
     options: cgraph::app::WindowOptions,
+    main_view: Box<dyn Renderable>,
 }
 
 impl Window {
@@ -16,6 +19,7 @@ impl Window {
             height,
             window: None,
             options: cgraph::app::WindowOptions::default(),
+            main_view: Box::new(crate::component::Empty::default()),
         }
     }
 
@@ -24,7 +28,7 @@ impl Window {
         self
     }
 
-    pub fn no_border(mut self) -> Self {
+    pub fn without_border(mut self) -> Self {
         self.options = WindowOptions::no_decorations();
         self
     }
@@ -36,7 +40,10 @@ impl Window {
             self.height,
             Some(self.options.clone()),
         ));
-        if let Some(window) = self.window.take() {
+        if let Some(mut window) = self.window.take() {
+            for view in self.main_view.render(window.framebuffer_size(), [0.0, 0.0]) {
+                window.add_object(view);
+            }
             window.launch();
         }
     }
@@ -54,5 +61,9 @@ impl Window {
         if let Some(window) = &mut self.window {
             window.set_size(self.width, self.height);
         }
+    }
+
+    pub fn set_main_view<T: Renderable + 'static>(&mut self, view: T) {
+        self.main_view = Box::new(view);
     }
 }

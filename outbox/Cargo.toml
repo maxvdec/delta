@@ -9,3 +9,4 @@ path = "src/outbox.rs"
 [dependencies]
 cfont = { path = "../core/cfont" }
 cgraph = { path = "../cgraph" }
+glam = "0.10"
