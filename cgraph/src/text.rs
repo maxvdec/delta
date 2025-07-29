@@ -1,6 +1,9 @@
 use std::error::Error;
 
-use cfont::font::shape::{TextTransform, produce_text};
+use cfont::font::{
+    shape::{TextTransform, produce_text},
+    style::TextStyle,
+};
 use glam::Vec2;
 
 use crate::{
@@ -23,6 +26,7 @@ pub fn get_font(window: &Window, name: &str, size: f32) -> Result<Font, Box<dyn 
         font_size: size,
         position: [0.0, 0.0],
         canvas_size: [window.width as f32, window.height as f32],
+        style: TextStyle::new(),
     };
     Ok(Font {
         core_font: font,
