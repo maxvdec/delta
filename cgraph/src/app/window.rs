@@ -478,6 +478,21 @@ impl Window {
     pub fn destroy(&self) {
         self.renderer.destroy();
     }
+
+    /// Sets the title of the window.
+    pub fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
+        self.window.set_title(&self.title);
+    }
+
+    /// Sets the size of the window.
+    pub fn set_size(&mut self, width: u32, height: u32) {
+        self.width = width;
+        self.height = height;
+        self.window
+            .set_inner_size(winit::dpi::LogicalSize::new(width, height));
+        self.renderer.resize(width as f64, height as f64);
+    }
 }
 
 fn device_id_to_u32(device_id: &DeviceId) -> u32 {

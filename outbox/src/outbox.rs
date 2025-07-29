@@ -6,3 +6,8 @@
 //! - **Text Rendering**: Supports advanced text rendering with custom styles and transformations.
 //! - **UI Components**: Provides a set of UI components for building user interfaces.
 //! - **Cross-Platform**: Designed to work across different platforms with minimal changes.
+
+/// This module provides the main entry point for the Outbox UI framework.
+pub mod app;
+/// This module contains the `Window` struct and related functionality for creating and managing windows.
+pub mod window;
