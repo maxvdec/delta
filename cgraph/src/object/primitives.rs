@@ -52,13 +52,18 @@ pub type Color = Vec4;
 
 /// Creates a new `Object` representing a quad with the given size, color, z-index, and position.
 pub fn create_quad(size: Size, color: Color, z_index: f32, position: Position) -> Object {
-    let half_width = size.width / 2.0;
-    let half_height = size.height / 2.0;
-
-    let left = position.x - half_width;
-    let right = position.x + half_width;
-    let bottom = position.y - half_height;
-    let top = position.y + half_height;
+    let left = position.x;
+    let right = if cfg!(target_os = "macos") {
+        position.x + size.width * 2.0
+    } else {
+        position.x + size.width
+    };
+    let bottom = if cfg!(target_os = "macos") {
+        position.y + size.height * 2.0
+    } else {
+        position.y + size.height
+    };
+    let top = position.y;
 
     let vertices = vec![
         Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left (0)
@@ -90,13 +95,18 @@ pub fn create_rounded_quad(
     position: Position,
     corner_radius: f32,
 ) -> Object {
-    let half_width = size.width / 2.0;
-    let half_height = size.height / 2.0;
-
-    let left = position.x - half_width;
-    let right = position.x + half_width;
-    let bottom = position.y - half_height;
-    let top = position.y + half_height;
+    let left = position.x;
+    let right = if cfg!(target_os = "macos") {
+        position.x + size.width * 2.0
+    } else {
+        position.x + size.width
+    };
+    let bottom = if cfg!(target_os = "macos") {
+        position.y + size.height * 2.0
+    } else {
+        position.y + size.height
+    };
+    let top = position.y;
 
     let vertices = vec![
         Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left
@@ -122,13 +132,18 @@ pub fn create_rounded_quad(
 
 /// Creates a new `Object` representing a circle with the given size, color, z-index, and position.
 pub fn create_circle(size: Size, color: Color, z_index: f32, position: Position) -> Object {
-    let half_width = size.width / 2.0;
-    let half_height = size.height / 2.0;
-
-    let left = position.x - half_width;
-    let right = position.x + half_width;
-    let bottom = position.y - half_height;
-    let top = position.y + half_height;
+    let left = position.x;
+    let right = if cfg!(target_os = "macos") {
+        position.x + size.width * 2.0
+    } else {
+        position.x + size.width
+    };
+    let bottom = if cfg!(target_os = "macos") {
+        position.y + size.height * 2.0
+    } else {
+        position.y + size.height
+    };
+    let top = position.y;
 
     let vertices = vec![
         Vertex::new(left, bottom, z_index, color, Vec2::new(0.0, 0.0)), // Bottom-left
@@ -147,7 +162,7 @@ pub fn create_circle(size: Size, color: Color, z_index: f32, position: Position)
     object.scale = Vec2::new(1.0, 1.0);
     object.original_pixel_size = Vec2::new(size.width, size.height);
     object.rotation = 0.0;
-    object.corner_radius = half_height; // Use half height as corner radius for a circle
+    object.corner_radius = size.height.min(size.width) / 2.0; // Use half of the smaller dimension for circle
     object.update_buffer();
     object
 }
@@ -177,8 +192,9 @@ pub fn create_polygon(
     }
 
     let radius = size.width.min(size.height) / 2.0;
-    let center_x = position.x;
-    let center_y = position.y;
+    // Calculate center based on top-left position
+    let center_x = position.x + size.width / 2.0;
+    let center_y = position.y + size.height / 2.0;
 
     let mut vertices = vec![Vertex::new(
         center_x,
@@ -193,8 +209,9 @@ pub fn create_polygon(
         let x = center_x + radius * angle.cos();
         let y = center_y + radius * angle.sin();
 
-        let u = (x - (center_x - radius)) / (2.0 * radius);
-        let v = (y - (center_y - radius)) / (2.0 * radius);
+        // Calculate texture coordinates relative to the bounding box
+        let u = (x - position.x) / size.width;
+        let v = (y - position.y) / size.height;
 
         vertices.push(Vertex::new(x, y, z_index, color, Vec2::new(u, v)));
     }

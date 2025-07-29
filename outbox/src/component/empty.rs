@@ -15,4 +15,8 @@ impl Renderable for Empty {
     fn get_size(&self) -> [f32; 2] {
         [0.0, 0.0]
     }
+
+    /// ## Warning
+    /// Do not use this method, use a `Spacer` instead.
+    fn padding(&mut self, _padding: [f32; 2]) {}
 }
