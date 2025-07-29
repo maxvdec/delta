@@ -1,4 +1,4 @@
 [workspace]
-members = ["cgraph", "core/cfont"]
+members = ["cgraph", "core/cfont", "outbox"]
 
 resolver = "3"
