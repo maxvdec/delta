@@ -1,0 +1,11 @@
+[package]
+name = "outbox"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/outbox.rs"
+
+[dependencies]
+cfont = { path = "../core/cfont" }
+cgraph = { path = "../cgraph" }

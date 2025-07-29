@@ -1281,6 +1281,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "outbox"
+version = "0.1.0"
+dependencies = [
+ "cfont",
+ "cgraph",
+]
+
+[[package]]
 name = "owned_ttf_parser"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
