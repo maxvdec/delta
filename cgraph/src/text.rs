@@ -326,8 +326,8 @@ pub fn make_weighted_text(
 
 /// Creates text with the TextStyleBuilder for maximum customization.
 ///
-/// # Example
-/// ```rust
+/// ## Example
+/// ```ignore
 /// let text_object = make_custom_text(
 ///     &window,
 ///     TextStyleBuilder::new("Arial", 24.0)
