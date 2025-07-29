@@ -67,13 +67,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Show bounding boxes
     let (min_x, min_y, max_x, max_y) = complex_geometry.bounding_box();
-    println!(
-        "Complex text bounding box: ({}, {}) to ({}, {})",
-        min_x, min_y, max_x, max_y
-    );
+    println!("Complex text bounding box: ({min_x}, {min_y}) to ({max_x}, {max_y})",);
 
     let (width, height) = complex_geometry.pixel_dimensions();
-    println!("Complex text dimensions: {}x{} pixels", width, height);
+    println!("Complex text dimensions: {width}x{height} pixels");
 
     Ok(())
 }
