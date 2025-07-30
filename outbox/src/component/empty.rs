@@ -16,7 +16,11 @@ impl Renderable for Empty {
         [0.0, 0.0]
     }
 
-    /// ## Warning
-    /// Do not use this method, use a `Spacer` instead.
-    fn padding(&mut self, _padding: [f32; 2]) {}
+    fn get_padding(&self) -> [f32; 4] {
+        [0.0, 0.0, 0.0, 0.0]
+    }
+
+    fn copy(&self) -> Box<dyn Renderable> {
+        Box::new(Empty::default())
+    }
 }
