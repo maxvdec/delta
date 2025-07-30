@@ -16,29 +16,10 @@ impl Renderable for Empty {
         [0.0, 0.0]
     }
 
-    /// ## Warning
-    /// Do not use this method, use a `Spacer` instead.
-    fn padding(self: Box<Self>, _padding: [f32; 4]) -> Box<dyn Renderable> {
-        self
-    }
-
-    fn padding_at(
-        self: Box<Self>,
-        _direction: crate::renderable::PaddingDirection,
-        _padding: f32,
-    ) -> Box<dyn Renderable> {
-        self
-    }
-    fn padding_area(
-        self: Box<Self>,
-        _direction: crate::renderable::PaddingDirection,
-        _padding: [f32; 2],
-    ) -> Box<dyn Renderable> {
-        self
-    }
     fn get_padding(&self) -> [f32; 4] {
         [0.0, 0.0, 0.0, 0.0]
     }
+
     fn copy(&self) -> Box<dyn Renderable> {
         Box::new(Empty::default())
     }

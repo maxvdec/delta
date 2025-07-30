@@ -6,6 +6,7 @@ pub struct Window {
     pub title: String,
     pub width: u32,
     pub height: u32,
+    pub app_font: String,
     window: Option<cgraph::app::Window>,
     options: cgraph::app::WindowOptions,
     main_view: Box<dyn Renderable>,
@@ -20,6 +21,7 @@ impl Window {
             window: None,
             options: cgraph::app::WindowOptions::default(),
             main_view: Box::new(crate::component::Empty::default()),
+            app_font: "Arial".to_string(),
         }
     }
 

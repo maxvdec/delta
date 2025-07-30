@@ -15,19 +15,24 @@ impl Renderable for Column {
     ) -> Vec<cgraph::object::Object> {
         let mut objects = Vec::new();
         let mut position = assigned_position;
-        let mut last_bottom = 0.0;
-        for element in &self.elements {
+
+        for (index, element) in self.elements.iter().enumerate() {
+            // Add spacing before each element except the first one
+            if index > 0 {
+                position[1] += self.spacing;
+            }
+
             let element_objects = element.render(
                 canvas_size,
                 [
                     position[0] + element.get_padding()[0],
-                    position[1] + element.get_padding()[1] + last_bottom,
+                    position[1] + element.get_padding()[1],
                 ],
             );
             objects.extend(element_objects);
+
             let size = element.get_size();
-            position[1] += size[1]; // Move down for the next element
-            last_bottom = element.get_padding()[3];
+            position[1] += size[1] + element.get_padding()[1] + element.get_padding()[3]; // Move down for the next element
         }
         objects
     }
@@ -35,11 +40,20 @@ impl Renderable for Column {
     fn get_size(&self) -> [f32; 2] {
         let mut y_size = 0.0;
         let mut x_sizes = Vec::new();
-        for element in &self.elements {
+
+        for (index, element) in self.elements.iter().enumerate() {
             let element_size = element.get_size();
-            x_sizes.push(element_size[0]);
-            y_size += element_size[1];
+            let element_padding = element.get_padding();
+
+            x_sizes.push(element_size[0] + element_padding[0] + element_padding[2]); // width + left + right padding
+            y_size += element_size[1] + element_padding[1] + element_padding[3]; // height + top + bottom padding
+
+            // Add spacing between elements (not after the last one)
+            if index > 0 {
+                y_size += self.spacing;
+            }
         }
+
         let max = x_sizes
             .iter()
             .cloned()
@@ -51,66 +65,6 @@ impl Renderable for Column {
         }
 
         [max.unwrap(), y_size]
-    }
-
-    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
-        let mut col = *self;
-        col.padding = padding;
-        col.apply_padding_and_spacing();
-        Box::new(col)
-    }
-
-    fn padding_at(
-        self: Box<Self>,
-        direction: crate::renderable::PaddingDirection,
-        padding: f32,
-    ) -> Box<dyn Renderable> {
-        let mut col = *self;
-        match direction {
-            crate::renderable::PaddingDirection::Top => {
-                col.padding[1] += padding;
-            }
-            crate::renderable::PaddingDirection::Bottom => {
-                col.padding[3] += padding;
-            }
-            crate::renderable::PaddingDirection::Left => {
-                col.padding[0] += padding;
-            }
-            crate::renderable::PaddingDirection::Right => {
-                col.padding[2] += padding;
-            }
-            crate::renderable::PaddingDirection::Vertical => {
-                col.padding[1] += padding;
-                col.padding[3] += padding;
-            }
-            crate::renderable::PaddingDirection::Horizontal => {
-                col.padding[0] += padding;
-                col.padding[2] += padding;
-            }
-        }
-        Box::new(col)
-    }
-
-    fn padding_area(
-        self: Box<Self>,
-        direction: crate::renderable::PaddingDirection,
-        padding: [f32; 2],
-    ) -> Box<dyn Renderable> {
-        let mut col = *self;
-        match direction {
-            crate::renderable::PaddingDirection::Vertical => {
-                col.padding[1] = padding[0]; // Top
-                col.padding[3] = padding[1]; // Bottom
-            }
-            crate::renderable::PaddingDirection::Horizontal => {
-                col.padding[0] = padding[0]; // Left
-                col.padding[2] = padding[1]; // Right
-            }
-            _ => {
-                panic!("Unsupported padding direction for Column component: {direction:?}");
-            }
-        }
-        Box::new(col)
     }
 
     fn get_padding(&self) -> [f32; 4] {
@@ -135,35 +89,72 @@ impl Column {
 
     pub fn add_spacing(&mut self, spacing: f32) -> &mut dyn Renderable {
         self.spacing = spacing;
-        self.apply_padding_and_spacing();
         self
     }
 
-    fn apply_padding_and_spacing(&mut self) {
-        if self.elements.is_empty() {
-            return;
+    /// Chainable version of add_spacing for use in builder pattern
+    pub fn with_spacing(mut self, spacing: f32) -> Self {
+        self.spacing = spacing;
+        self
+    }
+
+    /// Add padding to column [left, top, right, bottom]
+    pub fn padding(mut self, padding: [f32; 4]) -> Self {
+        self.padding = padding;
+        self
+    }
+
+    /// Add padding in a specific direction
+    pub fn padding_at(
+        mut self,
+        direction: crate::renderable::PaddingDirection,
+        padding: f32,
+    ) -> Self {
+        match direction {
+            crate::renderable::PaddingDirection::Top => {
+                self.padding[1] += padding;
+            }
+            crate::renderable::PaddingDirection::Bottom => {
+                self.padding[3] += padding;
+            }
+            crate::renderable::PaddingDirection::Left => {
+                self.padding[0] += padding;
+            }
+            crate::renderable::PaddingDirection::Right => {
+                self.padding[2] += padding;
+            }
+            crate::renderable::PaddingDirection::Vertical => {
+                self.padding[1] += padding;
+                self.padding[3] += padding;
+            }
+            crate::renderable::PaddingDirection::Horizontal => {
+                self.padding[0] += padding;
+                self.padding[2] += padding;
+            }
         }
+        self
+    }
 
-        let mut new_elements = Vec::new();
-
-        // Apply padding to first element
-        if let Some(first) = self.elements.drain(..1).next() {
-            new_elements.push(first.padding(self.padding));
+    /// Add padding for vertical or horizontal areas
+    pub fn padding_area(
+        mut self,
+        direction: crate::renderable::PaddingDirection,
+        padding: [f32; 2],
+    ) -> Self {
+        match direction {
+            crate::renderable::PaddingDirection::Vertical => {
+                self.padding[1] = padding[0]; // Top
+                self.padding[3] = padding[1]; // Bottom
+            }
+            crate::renderable::PaddingDirection::Horizontal => {
+                self.padding[0] = padding[0]; // Left
+                self.padding[2] = padding[1]; // Right
+            }
+            _ => {
+                panic!("Unsupported padding direction for Column component: {direction:?}");
+            }
         }
-
-        let mut y_offset = self.spacing;
-        for element in self.elements.drain(..) {
-            let padded_element = element.padding([
-                self.padding[0],
-                self.padding[1] + y_offset,
-                self.padding[2],
-                self.padding[3],
-            ]);
-            new_elements.push(padded_element);
-            y_offset += self.spacing;
-        }
-
-        self.elements = new_elements;
+        self
     }
 }
 
@@ -195,11 +186,24 @@ impl Renderable for Row {
     ) -> Vec<cgraph::object::Object> {
         let mut objects = Vec::new();
         let mut position = assigned_position;
-        for element in &self.elements {
-            let element_objects = element.render(canvas_size, position);
+
+        for (index, element) in self.elements.iter().enumerate() {
+            // Add spacing before each element except the first one
+            if index > 0 {
+                position[0] += self.spacing;
+            }
+
+            let element_objects = element.render(
+                canvas_size,
+                [
+                    position[0] + element.get_padding()[0],
+                    position[1] + element.get_padding()[1],
+                ],
+            );
             objects.extend(element_objects);
+
             let size = element.get_size();
-            position[0] += size[0]; // Move right for the next element
+            position[0] += size[0] + element.get_padding()[0] + element.get_padding()[2]; // Move right for the next element
         }
         objects
     }
@@ -207,14 +211,18 @@ impl Renderable for Row {
     fn get_size(&self) -> [f32; 2] {
         let mut y_sizes = Vec::new();
         let mut x_size = 0.0;
-        for element in &self.elements {
-            let element_size = element.get_size();
-            y_sizes.push(element_size[1]);
-            x_size += element_size[0];
-        }
 
-        if self.elements.len() > 1 {
-            x_size += self.spacing * (self.elements.len() - 1) as f32;
+        for (index, element) in self.elements.iter().enumerate() {
+            let element_size = element.get_size();
+            let element_padding = element.get_padding();
+
+            y_sizes.push(element_size[1] + element_padding[1] + element_padding[3]); // height + top + bottom padding
+            x_size += element_size[0] + element_padding[0] + element_padding[2]; // width + left + right padding
+
+            // Add spacing between elements (not after the last one)
+            if index > 0 {
+                x_size += self.spacing;
+            }
         }
 
         let max = y_sizes
@@ -228,66 +236,6 @@ impl Renderable for Row {
         }
 
         [x_size, max.unwrap()]
-    }
-
-    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
-        let mut row = *self;
-        row.padding = padding;
-        row.apply_padding_and_spacing();
-        Box::new(row)
-    }
-
-    fn padding_at(
-        self: Box<Self>,
-        direction: crate::renderable::PaddingDirection,
-        padding: f32,
-    ) -> Box<dyn Renderable> {
-        let mut row = *self;
-        match direction {
-            crate::renderable::PaddingDirection::Top => {
-                row.padding[1] += padding;
-            }
-            crate::renderable::PaddingDirection::Bottom => {
-                row.padding[3] += padding;
-            }
-            crate::renderable::PaddingDirection::Left => {
-                row.padding[0] += padding;
-            }
-            crate::renderable::PaddingDirection::Right => {
-                row.padding[2] += padding;
-            }
-            crate::renderable::PaddingDirection::Vertical => {
-                row.padding[1] += padding;
-                row.padding[3] += padding;
-            }
-            crate::renderable::PaddingDirection::Horizontal => {
-                row.padding[0] += padding;
-                row.padding[2] += padding;
-            }
-        }
-        Box::new(row)
-    }
-
-    fn padding_area(
-        self: Box<Self>,
-        direction: crate::renderable::PaddingDirection,
-        padding: [f32; 2],
-    ) -> Box<dyn Renderable> {
-        let mut row = *self;
-        match direction {
-            crate::renderable::PaddingDirection::Vertical => {
-                row.padding[1] = padding[0]; // Top
-                row.padding[3] = padding[1]; // Bottom
-            }
-            crate::renderable::PaddingDirection::Horizontal => {
-                row.padding[0] = padding[0]; // Left
-                row.padding[2] = padding[1]; // Right
-            }
-            _ => {
-                panic!("Unsupported padding direction for Row component: {direction:?}");
-            }
-        }
-        Box::new(row)
     }
 
     fn get_padding(&self) -> [f32; 4] {
@@ -310,38 +258,74 @@ impl Row {
         self
     }
 
-    pub fn add_spacing(&mut self, spacing: f32) -> &mut Self {
+    pub fn add_spacing(mut self, spacing: f32) -> Self {
         self.spacing = spacing;
-        self.apply_padding_and_spacing();
         self
     }
 
-    fn apply_padding_and_spacing(&mut self) {
-        if self.elements.is_empty() {
-            return;
+    /// Mutable version of add_spacing for when you have a mutable reference
+    pub fn set_spacing(&mut self, spacing: f32) -> &mut Self {
+        self.spacing = spacing;
+        self
+    }
+
+    /// Add padding to row [left, top, right, bottom]
+    pub fn padding(mut self, padding: [f32; 4]) -> Self {
+        self.padding = padding;
+        self
+    }
+
+    /// Add padding in a specific direction
+    pub fn padding_at(
+        mut self,
+        direction: crate::renderable::PaddingDirection,
+        padding: f32,
+    ) -> Self {
+        match direction {
+            crate::renderable::PaddingDirection::Top => {
+                self.padding[1] += padding;
+            }
+            crate::renderable::PaddingDirection::Bottom => {
+                self.padding[3] += padding;
+            }
+            crate::renderable::PaddingDirection::Left => {
+                self.padding[0] += padding;
+            }
+            crate::renderable::PaddingDirection::Right => {
+                self.padding[2] += padding;
+            }
+            crate::renderable::PaddingDirection::Vertical => {
+                self.padding[1] += padding;
+                self.padding[3] += padding;
+            }
+            crate::renderable::PaddingDirection::Horizontal => {
+                self.padding[0] += padding;
+                self.padding[2] += padding;
+            }
         }
+        self
+    }
 
-        let mut new_elements = Vec::new();
-
-        // Apply padding to first element
-        if let Some(first) = self.elements.drain(..1).next() {
-            new_elements.push(first.padding(self.padding));
+    /// Add padding for vertical or horizontal areas
+    pub fn padding_area(
+        mut self,
+        direction: crate::renderable::PaddingDirection,
+        padding: [f32; 2],
+    ) -> Self {
+        match direction {
+            crate::renderable::PaddingDirection::Vertical => {
+                self.padding[1] = padding[0]; // Top
+                self.padding[3] = padding[1]; // Bottom
+            }
+            crate::renderable::PaddingDirection::Horizontal => {
+                self.padding[0] = padding[0]; // Left
+                self.padding[2] = padding[1]; // Right
+            }
+            _ => {
+                panic!("Unsupported padding direction for Row component: {direction:?}");
+            }
         }
-
-        // Apply padding and spacing to remaining elements
-        let mut x_offset = self.spacing;
-        for element in self.elements.drain(..) {
-            let padded_element = element.padding([
-                self.padding[0] + x_offset,
-                self.padding[1],
-                self.padding[2],
-                self.padding[3],
-            ]);
-            new_elements.push(padded_element);
-            x_offset += self.spacing;
-        }
-
-        self.elements = new_elements;
+        self
     }
 }
 

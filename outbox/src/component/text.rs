@@ -9,7 +9,10 @@ use cgraph::{
 };
 use glam::Vec2;
 
-use crate::renderable::{PaddingDirection, Renderable};
+use crate::{
+    renderable::{PaddingDirection, Renderable},
+    window::Window,
+};
 
 #[derive(Clone)]
 pub struct Text {
@@ -74,6 +77,29 @@ impl Text {
         }
     }
 
+    pub fn new_default(content: &str, window: &Window) -> Self {
+        let font_family = window.app_font.as_str();
+        let font = get_system_font(font_family).unwrap_or_else(|_| {
+            eprintln!("Failed to load {font_family} font, using default font.");
+            Font::default()
+        });
+
+        Text {
+            content: content.to_string(),
+            font,
+            font_family: font_family.to_string(),
+            font_transform: TextTransform {
+                canvas_size: [0.0, 0.0],
+                font_size: 16.0,
+                position: [0.0, 0.0],
+                style: TextStyle::new(),
+            },
+            padding: [0.0, 0.0, 0.0, 0.0], // [left, top, right, bottom]
+            overrides_position: false,
+            overrided_position: [0.0, 0.0],
+        }
+    }
+
     pub fn set_font(&mut self, font: Font) -> &mut Self {
         self.font = font;
         self
@@ -81,12 +107,6 @@ impl Text {
 
     pub fn set_font_by_name(&mut self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.font_family = name.to_string();
-        self.reload_font_with_style()?;
-        Ok(())
-    }
-
-    /// Reloads the font with the current style settings
-    fn reload_font_with_style(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         self.font = get_system_font_with_style(&self.font_family, &self.font_transform.style)?;
         Ok(())
     }
@@ -103,25 +123,51 @@ impl Text {
             .style
             .clone()
             .with_weight(cfont::font::style::FontWeight::Bold);
-        let _ = self.reload_font_with_style();
+        if let Ok(updated_font) =
+            get_system_font_with_style(&self.font_family, &self.font_transform.style)
+        {
+            self.font = updated_font;
+        }
         self
     }
 
     pub fn italic(mut self) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_italic(true);
-        let _ = self.reload_font_with_style();
+        match get_system_font_with_style(&self.font_family, &self.font_transform.style) {
+            Ok(updated_font) => {
+                eprintln!(
+                    "Successfully loaded italic font for: {} with style: {:?}",
+                    self.font_family, self.font_transform.style
+                );
+                self.font = updated_font;
+            }
+            Err(e) => {
+                eprintln!(
+                    "Failed to load italic font for {}: {} with style: {:?}",
+                    self.font_family, e, self.font_transform.style
+                );
+            }
+        }
         self
     }
 
     pub fn underlined(mut self) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_underlined(true);
-        let _ = self.reload_font_with_style();
+        if let Ok(updated_font) =
+            get_system_font_with_style(&self.font_family, &self.font_transform.style)
+        {
+            self.font = updated_font;
+        }
         self
     }
 
     pub fn weight(mut self, weight: cfont::font::style::FontWeight) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_weight(weight);
-        let _ = self.reload_font_with_style();
+        if let Ok(updated_font) =
+            get_system_font_with_style(&self.font_family, &self.font_transform.style)
+        {
+            self.font = updated_font;
+        }
         self
     }
 
@@ -131,8 +177,11 @@ impl Text {
             .style
             .clone()
             .with_weight(cfont::font::style::FontWeight::Thin);
-
-        let _ = self.reload_font_with_style();
+        if let Ok(updated_font) =
+            get_system_font_with_style(&self.font_family, &self.font_transform.style)
+        {
+            self.font = updated_font;
+        }
         self
     }
 
@@ -142,7 +191,11 @@ impl Text {
             .style
             .clone()
             .with_weight(cfont::font::style::FontWeight::Light);
-        let _ = self.reload_font_with_style();
+        if let Ok(updated_font) =
+            get_system_font_with_style(&self.font_family, &self.font_transform.style)
+        {
+            self.font = updated_font;
+        }
         self
     }
 
@@ -152,12 +205,69 @@ impl Text {
             .style
             .clone()
             .with_weight(cfont::font::style::FontWeight::ExtraBold);
-        let _ = self.reload_font_with_style();
+        match get_system_font_with_style(&self.font_family, &self.font_transform.style) {
+            Ok(updated_font) => {
+                eprintln!(
+                    "Successfully loaded extra_bold font for: {} with style: {:?}",
+                    self.font_family, self.font_transform.style
+                );
+                self.font = updated_font;
+            }
+            Err(e) => {
+                eprintln!(
+                    "Failed to load extra_bold font for {}: {} with style: {:?}",
+                    self.font_family, e, self.font_transform.style
+                );
+            }
+        }
         self
     }
 
     pub fn set_size(mut self, size: f32) -> Self {
         self.font_transform.font_size = size;
+        self
+    }
+
+    /// Add padding to text [left, top, right, bottom]
+    pub fn padding(mut self, padding: [f32; 4]) -> Self {
+        self.padding = padding;
+        self
+    }
+
+    /// Add padding in a specific direction
+    pub fn padding_at(mut self, direction: PaddingDirection, padding: f32) -> Self {
+        match direction {
+            PaddingDirection::Top => self.padding[1] = padding,
+            PaddingDirection::Bottom => self.padding[3] = padding,
+            PaddingDirection::Left => self.padding[0] = padding,
+            PaddingDirection::Right => self.padding[2] = padding,
+            PaddingDirection::Vertical => {
+                self.padding[1] = padding; // Top
+                self.padding[3] = padding; // Bottom
+            }
+            PaddingDirection::Horizontal => {
+                self.padding[0] = padding; // Left
+                self.padding[2] = padding; // Right
+            }
+        }
+        self
+    }
+
+    /// Add padding for vertical or horizontal areas
+    pub fn padding_area(mut self, direction: PaddingDirection, padding: [f32; 2]) -> Self {
+        match direction {
+            PaddingDirection::Vertical => {
+                self.padding[1] = padding[0]; // Top
+                self.padding[3] = padding[1]; // Bottom
+            }
+            PaddingDirection::Horizontal => {
+                self.padding[0] = padding[0]; // Left
+                self.padding[2] = padding[1]; // Right
+            }
+            _ => {
+                panic!("Unsupported padding direction for Text component: {direction:?}");
+            }
+        }
         self
     }
 }
@@ -210,57 +320,6 @@ impl Renderable for Text {
                 [width, height]
             }
         }
-    }
-
-    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
-        let mut text = *self;
-        text.padding = padding;
-        Box::new(text)
-    }
-
-    fn padding_area(
-        self: Box<Self>,
-        direction: crate::renderable::PaddingDirection,
-        padding: [f32; 2],
-    ) -> Box<dyn Renderable> {
-        let mut text = *self;
-        match direction {
-            PaddingDirection::Vertical => {
-                text.padding[1] = padding[0]; // Top
-                text.padding[3] = padding[1]; // Bottom
-            }
-            PaddingDirection::Horizontal => {
-                text.padding[0] = padding[0]; // Left
-                text.padding[2] = padding[1]; // Right
-            }
-            _ => {
-                panic!("Unsupported padding direction for Text component: {direction:?}");
-            }
-        }
-        Box::new(text)
-    }
-
-    fn padding_at(
-        self: Box<Self>,
-        direction: PaddingDirection,
-        padding: f32,
-    ) -> Box<dyn Renderable> {
-        let mut text = *self;
-        match direction {
-            PaddingDirection::Top => text.padding[1] = padding,
-            PaddingDirection::Bottom => text.padding[3] = padding,
-            PaddingDirection::Left => text.padding[0] = padding,
-            PaddingDirection::Right => text.padding[2] = padding,
-            PaddingDirection::Vertical => {
-                text.padding[1] = padding; // Top
-                text.padding[3] = padding; // Bottom
-            }
-            PaddingDirection::Horizontal => {
-                text.padding[0] = padding; // Left
-                text.padding[2] = padding; // Right
-            }
-        }
-        Box::new(text)
     }
 
     fn get_padding(&self) -> [f32; 4] {
