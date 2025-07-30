@@ -97,7 +97,7 @@ impl Text {
         self
     }
 
-    pub fn bold(&mut self) -> &mut Self {
+    pub fn bold(mut self) -> Self {
         self.font_transform.style = self
             .font_transform
             .style
@@ -107,25 +107,25 @@ impl Text {
         self
     }
 
-    pub fn italic(&mut self) -> &mut Self {
+    pub fn italic(mut self) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_italic(true);
         let _ = self.reload_font_with_style();
         self
     }
 
-    pub fn underlined(&mut self) -> &mut Self {
+    pub fn underlined(mut self) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_underlined(true);
         let _ = self.reload_font_with_style();
         self
     }
 
-    pub fn weight(&mut self, weight: cfont::font::style::FontWeight) -> &mut Self {
+    pub fn weight(mut self, weight: cfont::font::style::FontWeight) -> Self {
         self.font_transform.style = self.font_transform.style.clone().with_weight(weight);
         let _ = self.reload_font_with_style();
         self
     }
 
-    pub fn thin(&mut self) -> &mut Self {
+    pub fn thin(mut self) -> Self {
         self.font_transform.style = self
             .font_transform
             .style
@@ -136,7 +136,7 @@ impl Text {
         self
     }
 
-    pub fn light(&mut self) -> &mut Self {
+    pub fn light(mut self) -> Self {
         self.font_transform.style = self
             .font_transform
             .style
@@ -146,7 +146,7 @@ impl Text {
         self
     }
 
-    pub fn extra_bold(&mut self) -> &mut Self {
+    pub fn extra_bold(mut self) -> Self {
         self.font_transform.style = self
             .font_transform
             .style
@@ -156,7 +156,7 @@ impl Text {
         self
     }
 
-    pub fn set_size(&mut self, size: f32) -> &mut Self {
+    pub fn set_size(mut self, size: f32) -> Self {
         self.font_transform.font_size = size;
         self
     }
@@ -212,55 +212,62 @@ impl Renderable for Text {
         }
     }
 
-    fn padding(&mut self, padding: [f32; 4]) -> &mut dyn Renderable {
-        self.padding = padding;
-        self
+    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
+        let mut text = *self;
+        text.padding = padding;
+        Box::new(text)
     }
 
     fn padding_area(
-        &mut self,
+        self: Box<Self>,
         direction: crate::renderable::PaddingDirection,
         padding: [f32; 2],
-    ) -> &mut dyn Renderable {
+    ) -> Box<dyn Renderable> {
+        let mut text = *self;
         match direction {
             PaddingDirection::Vertical => {
-                self.padding[1] = padding[0]; // Top
-                self.padding[3] = padding[1]; // Bottom
+                text.padding[1] = padding[0]; // Top
+                text.padding[3] = padding[1]; // Bottom
             }
             PaddingDirection::Horizontal => {
-                self.padding[0] = padding[0]; // Left
-                self.padding[2] = padding[1]; // Right
+                text.padding[0] = padding[0]; // Left
+                text.padding[2] = padding[1]; // Right
             }
             _ => {
                 panic!("Unsupported padding direction for Text component: {direction:?}");
             }
         }
-        self
+        Box::new(text)
     }
 
-    fn padding_at(&mut self, direction: PaddingDirection, padding: f32) -> &mut dyn Renderable {
+    fn padding_at(
+        self: Box<Self>,
+        direction: PaddingDirection,
+        padding: f32,
+    ) -> Box<dyn Renderable> {
+        let mut text = *self;
         match direction {
-            PaddingDirection::Top => self.padding[1] = padding,
-            PaddingDirection::Bottom => self.padding[3] = padding,
-            PaddingDirection::Left => self.padding[0] = padding,
-            PaddingDirection::Right => self.padding[2] = padding,
+            PaddingDirection::Top => text.padding[1] = padding,
+            PaddingDirection::Bottom => text.padding[3] = padding,
+            PaddingDirection::Left => text.padding[0] = padding,
+            PaddingDirection::Right => text.padding[2] = padding,
             PaddingDirection::Vertical => {
-                self.padding[1] = padding; // Top
-                self.padding[3] = padding; // Bottom
+                text.padding[1] = padding; // Top
+                text.padding[3] = padding; // Bottom
             }
             PaddingDirection::Horizontal => {
-                self.padding[0] = padding; // Left
-                self.padding[2] = padding; // Right
+                text.padding[0] = padding; // Left
+                text.padding[2] = padding; // Right
             }
         }
-        self
+        Box::new(text)
     }
 
     fn get_padding(&self) -> [f32; 4] {
         self.padding
     }
 
-    fn copy(&mut self) -> Box<dyn Renderable> {
+    fn copy(&self) -> Box<dyn Renderable> {
         Box::new(self.clone())
     }
 }

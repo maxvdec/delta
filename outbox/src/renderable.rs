@@ -15,13 +15,17 @@ pub trait Renderable {
         assigned_position: [f32; 2],
     ) -> Vec<cgraph::object::Object>;
     fn get_size(&self) -> [f32; 2];
-    fn padding(&mut self, padding: [f32; 4]) -> &mut dyn Renderable;
+    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable>;
     fn padding_area(
-        &mut self,
+        self: Box<Self>,
         direction: PaddingDirection,
         padding: [f32; 2],
-    ) -> &mut dyn Renderable;
-    fn padding_at(&mut self, direction: PaddingDirection, padding: f32) -> &mut dyn Renderable;
+    ) -> Box<dyn Renderable>;
+    fn padding_at(
+        self: Box<Self>,
+        direction: PaddingDirection,
+        padding: f32,
+    ) -> Box<dyn Renderable>;
     fn get_padding(&self) -> [f32; 4];
-    fn copy(&mut self) -> Box<dyn Renderable>;
+    fn copy(&self) -> Box<dyn Renderable>;
 }

@@ -1,4 +1,4 @@
-use outbox::{component::Text, renderable::Renderable};
+use outbox::component::Text;
 
 fn main() {
     let mut app = outbox::app::Application::new("Outbox", "0.1.0");
@@ -6,9 +6,7 @@ fn main() {
 
     let mut text = Text::new("Hello, World!");
     text.set_font_by_name("Arial").unwrap();
-    text.set_size(24.0);
-    text.italic();
-    text.extra_bold();
+    text = text.set_size(24.0).italic().extra_bold();
 
     win.set_main_view(text);
     app.set_main_window(win);

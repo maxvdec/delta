@@ -53,69 +53,72 @@ impl Renderable for Column {
         [max.unwrap(), y_size]
     }
 
-    fn padding(&mut self, padding: [f32; 4]) -> &mut dyn Renderable {
-        self.padding = padding;
-        self.apply_padding_and_spacing();
-        self
+    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
+        let mut col = *self;
+        col.padding = padding;
+        col.apply_padding_and_spacing();
+        Box::new(col)
     }
 
     fn padding_at(
-        &mut self,
+        self: Box<Self>,
         direction: crate::renderable::PaddingDirection,
         padding: f32,
-    ) -> &mut dyn Renderable {
+    ) -> Box<dyn Renderable> {
+        let mut col = *self;
         match direction {
             crate::renderable::PaddingDirection::Top => {
-                self.padding[1] += padding;
+                col.padding[1] += padding;
             }
             crate::renderable::PaddingDirection::Bottom => {
-                self.padding[3] += padding;
+                col.padding[3] += padding;
             }
             crate::renderable::PaddingDirection::Left => {
-                self.padding[0] += padding;
+                col.padding[0] += padding;
             }
             crate::renderable::PaddingDirection::Right => {
-                self.padding[2] += padding;
+                col.padding[2] += padding;
             }
             crate::renderable::PaddingDirection::Vertical => {
-                self.padding[1] += padding;
-                self.padding[3] += padding;
+                col.padding[1] += padding;
+                col.padding[3] += padding;
             }
             crate::renderable::PaddingDirection::Horizontal => {
-                self.padding[0] += padding;
-                self.padding[2] += padding;
+                col.padding[0] += padding;
+                col.padding[2] += padding;
             }
         }
-        self
+        Box::new(col)
     }
 
     fn padding_area(
-        &mut self,
+        self: Box<Self>,
         direction: crate::renderable::PaddingDirection,
         padding: [f32; 2],
-    ) -> &mut dyn Renderable {
+    ) -> Box<dyn Renderable> {
+        let mut col = *self;
         match direction {
             crate::renderable::PaddingDirection::Vertical => {
-                self.padding[1] = padding[0]; // Top
-                self.padding[3] = padding[1]; // Bottom
+                col.padding[1] = padding[0]; // Top
+                col.padding[3] = padding[1]; // Bottom
             }
             crate::renderable::PaddingDirection::Horizontal => {
-                self.padding[0] = padding[0]; // Left
-                self.padding[2] = padding[1]; // Right
+                col.padding[0] = padding[0]; // Left
+                col.padding[2] = padding[1]; // Right
             }
             _ => {
                 panic!("Unsupported padding direction for Column component: {direction:?}");
             }
         }
-        self
+        Box::new(col)
     }
 
     fn get_padding(&self) -> [f32; 4] {
         self.padding
     }
 
-    fn copy(&mut self) -> Box<dyn Renderable> {
-        let cloned_elements = self.elements.iter_mut().map(|e| e.copy()).collect();
+    fn copy(&self) -> Box<dyn Renderable> {
+        let cloned_elements = self.elements.iter().map(|e| e.copy()).collect();
         Box::new(Column {
             elements: cloned_elements,
             spacing: self.spacing,
@@ -136,22 +139,31 @@ impl Column {
         self
     }
 
-    fn apply_padding_and_spacing(&mut self) -> &mut dyn Renderable {
+    fn apply_padding_and_spacing(&mut self) {
         if self.elements.is_empty() {
-            return self;
+            return;
         }
-        self.elements[0].padding(self.padding);
+
+        let mut new_elements = Vec::new();
+
+        // Apply padding to first element
+        if let Some(first) = self.elements.drain(..1).next() {
+            new_elements.push(first.padding(self.padding));
+        }
+
         let mut y_offset = self.spacing;
-        for element in self.elements.iter_mut().skip(1) {
-            element.padding([
+        for element in self.elements.drain(..) {
+            let padded_element = element.padding([
                 self.padding[0],
                 self.padding[1] + y_offset,
                 self.padding[2],
                 self.padding[3],
             ]);
+            new_elements.push(padded_element);
             y_offset += self.spacing;
         }
-        self
+
+        self.elements = new_elements;
     }
 }
 
@@ -161,9 +173,7 @@ macro_rules! stack {
         {
             let mut col = Column::default();
             $(
-                // For expressions that result in owned values
-                let owned_value = $child.copy();
-                col.add_element(owned_value);
+                col.elements.push(Box::new($child));
             )*
             col
         }
@@ -220,69 +230,72 @@ impl Renderable for Row {
         [x_size, max.unwrap()]
     }
 
-    fn padding(&mut self, padding: [f32; 4]) -> &mut dyn Renderable {
-        self.padding = padding;
-        self.apply_padding_and_spacing();
-        self
+    fn padding(self: Box<Self>, padding: [f32; 4]) -> Box<dyn Renderable> {
+        let mut row = *self;
+        row.padding = padding;
+        row.apply_padding_and_spacing();
+        Box::new(row)
     }
 
     fn padding_at(
-        &mut self,
+        self: Box<Self>,
         direction: crate::renderable::PaddingDirection,
         padding: f32,
-    ) -> &mut dyn Renderable {
+    ) -> Box<dyn Renderable> {
+        let mut row = *self;
         match direction {
             crate::renderable::PaddingDirection::Top => {
-                self.padding[1] += padding;
+                row.padding[1] += padding;
             }
             crate::renderable::PaddingDirection::Bottom => {
-                self.padding[3] += padding;
+                row.padding[3] += padding;
             }
             crate::renderable::PaddingDirection::Left => {
-                self.padding[0] += padding;
+                row.padding[0] += padding;
             }
             crate::renderable::PaddingDirection::Right => {
-                self.padding[2] += padding;
+                row.padding[2] += padding;
             }
             crate::renderable::PaddingDirection::Vertical => {
-                self.padding[1] += padding;
-                self.padding[3] += padding;
+                row.padding[1] += padding;
+                row.padding[3] += padding;
             }
             crate::renderable::PaddingDirection::Horizontal => {
-                self.padding[0] += padding;
-                self.padding[2] += padding;
+                row.padding[0] += padding;
+                row.padding[2] += padding;
             }
         }
-        self
+        Box::new(row)
     }
 
     fn padding_area(
-        &mut self,
+        self: Box<Self>,
         direction: crate::renderable::PaddingDirection,
         padding: [f32; 2],
-    ) -> &mut dyn Renderable {
+    ) -> Box<dyn Renderable> {
+        let mut row = *self;
         match direction {
             crate::renderable::PaddingDirection::Vertical => {
-                self.padding[1] = padding[0]; // Top
-                self.padding[3] = padding[1]; // Bottom
+                row.padding[1] = padding[0]; // Top
+                row.padding[3] = padding[1]; // Bottom
             }
             crate::renderable::PaddingDirection::Horizontal => {
-                self.padding[0] = padding[0]; // Left
-                self.padding[2] = padding[1]; // Right
+                row.padding[0] = padding[0]; // Left
+                row.padding[2] = padding[1]; // Right
             }
             _ => {
                 panic!("Unsupported padding direction for Row component: {direction:?}");
             }
         }
-        self
+        Box::new(row)
     }
 
     fn get_padding(&self) -> [f32; 4] {
         self.padding
     }
 
-    fn copy(&mut self) -> Box<dyn Renderable> {
-        let cloned_elements = self.elements.iter_mut().map(|e| e.copy()).collect();
+    fn copy(&self) -> Box<dyn Renderable> {
+        let cloned_elements = self.elements.iter().map(|e| e.copy()).collect();
         Box::new(Row {
             elements: cloned_elements,
             spacing: self.spacing,
@@ -303,22 +316,32 @@ impl Row {
         self
     }
 
-    fn apply_padding_and_spacing(&mut self) -> &mut Self {
+    fn apply_padding_and_spacing(&mut self) {
         if self.elements.is_empty() {
-            return self;
+            return;
         }
-        self.elements[0].padding(self.padding);
+
+        let mut new_elements = Vec::new();
+
+        // Apply padding to first element
+        if let Some(first) = self.elements.drain(..1).next() {
+            new_elements.push(first.padding(self.padding));
+        }
+
+        // Apply padding and spacing to remaining elements
         let mut x_offset = self.spacing;
-        for element in self.elements.iter_mut().skip(1) {
-            element.padding([
+        for element in self.elements.drain(..) {
+            let padded_element = element.padding([
                 self.padding[0] + x_offset,
                 self.padding[1],
                 self.padding[2],
                 self.padding[3],
             ]);
+            new_elements.push(padded_element);
             x_offset += self.spacing;
         }
-        self
+
+        self.elements = new_elements;
     }
 }
 
@@ -328,8 +351,7 @@ macro_rules! row {
         {
             let mut row = Row::default();
             $(
-                let owned_value = $child.copy();
-                row.add_element(owned_value);
+                row.elements.push(Box::new($child));
             )*
             row
         }
