@@ -41,10 +41,11 @@ impl Window {
             Some(self.options.clone()),
         ));
         if let Some(mut window) = self.window.take() {
-            for view in self
-                .main_view
-                .render([window.width as f32, window.height as f32], [0.0, 0.0])
-            {
+            let first_padding = self.main_view.get_padding();
+            for view in self.main_view.render(
+                [window.width as f32, window.height as f32],
+                [0.0 + first_padding[0], 0.0 + first_padding[1]],
+            ) {
                 window.add_object(view);
             }
             window.launch();

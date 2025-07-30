@@ -1,7 +1,7 @@
 use outbox::{
     app::Application,
     component::{Column, Row, Text},
-    renderable::Renderable,
+    renderable::{PaddingDirection, Renderable},
     row, stack,
     window::Window,
 };
@@ -11,7 +11,9 @@ fn main() {
     let mut win = Window::new("Window", 800, 600);
 
     let mut col: Column = stack!(
-        Text::new("Hello, World!"),
+        Text::new("Hello, World!")
+            .bold()
+            .padding_at(PaddingDirection::Top, 10.0),
         Text::new("This is a column layout!"),
         Text::new("Ain't this amazing?"),
         Text::new("Hello"),
@@ -23,7 +25,8 @@ fn main() {
     );
 
     col.add_spacing(10.0);
-    col.padding([10.0, 100.0]);
+    col.padding_at(PaddingDirection::Left, 100.0);
+    col.padding_at(PaddingDirection::Top, 50.0);
 
     win.set_main_view(col);
 

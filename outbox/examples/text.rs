@@ -9,7 +9,6 @@ fn main() {
     text.set_size(24.0);
     text.italic();
     text.extra_bold();
-    text.padding([0.0, 10.0]);
 
     win.set_main_view(text);
     app.set_main_window(win);

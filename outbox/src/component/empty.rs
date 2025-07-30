@@ -18,5 +18,28 @@ impl Renderable for Empty {
 
     /// ## Warning
     /// Do not use this method, use a `Spacer` instead.
-    fn padding(&mut self, _padding: [f32; 2]) {}
+    fn padding(&mut self, _padding: [f32; 4]) -> &mut dyn Renderable {
+        self
+    }
+
+    fn padding_at(
+        &mut self,
+        _direction: crate::renderable::PaddingDirection,
+        _padding: f32,
+    ) -> &mut dyn Renderable {
+        self
+    }
+    fn padding_area(
+        &mut self,
+        _direction: crate::renderable::PaddingDirection,
+        _padding: [f32; 2],
+    ) -> &mut dyn Renderable {
+        self
+    }
+    fn get_padding(&self) -> [f32; 4] {
+        [0.0, 0.0, 0.0, 0.0]
+    }
+    fn copy(&mut self) -> Box<dyn Renderable> {
+        Box::new(Empty::default())
+    }
 }
