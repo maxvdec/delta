@@ -11,6 +11,8 @@
 pub mod app;
 /// This module contains all the components that can be rendered in Outbox.
 pub mod component;
+/// This module contains the `Interactable` trait for handling user interactions with UI components.
+pub mod interactable;
 /// This module defines the `Renderable` trait and related types for rendering UI components.
 pub mod renderable;
 /// This module contains the `Window` struct and related functionality for creating and managing windows.
