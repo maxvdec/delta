@@ -7,6 +7,7 @@ fn main() {
     let mut text = Text::new("Hello, World!");
     text.set_font_by_name("Arial").unwrap();
     text.set_size(24.0);
+    text.italic();
     text.extra_bold();
     text.padding([0.0, 10.0]);
 
