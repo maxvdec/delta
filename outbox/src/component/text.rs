@@ -1,6 +1,6 @@
 use cfont::font::{
     load::{Font, get_system_font, get_system_font_with_style},
-    shape::{TextTransform, produce_styled_text},
+    shape::{TextTransform, produce_styled_text_with_family_name},
     style::TextStyle,
 };
 use cgraph::{
@@ -135,10 +135,6 @@ impl Text {
         self.font_transform.style = self.font_transform.style.clone().with_italic(true);
         match get_system_font_with_style(&self.font_family, &self.font_transform.style) {
             Ok(updated_font) => {
-                eprintln!(
-                    "Successfully loaded italic font for: {} with style: {:?}",
-                    self.font_family, self.font_transform.style
-                );
                 self.font = updated_font;
             }
             Err(e) => {
@@ -305,7 +301,12 @@ impl Renderable for Text {
     }
 
     fn get_size(&self) -> [f32; 2] {
-        match produce_styled_text(self.font.clone(), &self.content, &self.font_transform.style) {
+        match produce_styled_text_with_family_name(
+            self.font.clone(),
+            &self.content,
+            &self.font_transform.style,
+            &self.font_family,
+        ) {
             Ok(mut geometry) => {
                 let font_units_per_em = 1000.0;
                 geometry.transform_to_canvas(self.font_transform.clone(), font_units_per_em);

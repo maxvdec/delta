@@ -6,7 +6,7 @@ pub mod shape;
 pub mod style;
 
 use load::get_system_font_with_style;
-use shape::{TextGeometry, TextTransform, produce_styled_text};
+use shape::{TextGeometry, TextTransform, produce_styled_text_with_family_name};
 use std::error::Error;
 use style::TextStyle;
 
@@ -25,7 +25,8 @@ pub fn render_text(
     transform: TextTransform,
 ) -> Result<TextGeometry, Box<dyn Error>> {
     let font = get_system_font_with_style(family_name, &transform.style)?;
-    let mut geometry = produce_styled_text(font, text, &transform.style)?;
+    let mut geometry =
+        produce_styled_text_with_family_name(font, text, &transform.style, family_name)?;
 
     // Apply the transform to position and scale the text
     let font_units_per_em = 1000.0; // Default value, could be extracted from font metrics

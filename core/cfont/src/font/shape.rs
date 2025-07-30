@@ -140,13 +140,60 @@ impl OutlineSink for PathBuilderSink {
     }
 }
 
-/// Produces a `TextGeometry` from the given font and text string.
+/// Extracts font metrics for better character spacing.
+fn get_font_metrics(font: &font_kit::font::Font) -> (f32, f32, f32) {
+    let metrics = font.metrics();
+    let units_per_em = metrics.units_per_em as f32;
+    let line_height = metrics.ascent + metrics.descent + metrics.line_gap;
+    let ascent = metrics.ascent;
+
+    (units_per_em, line_height, ascent)
+}
+
+/// Calculates font-specific spacing multiplier based on font characteristics.
+fn calculate_spacing_multiplier(font_family_name: &str) -> f32 {
+    // Font-specific spacing adjustments for fonts known to have spacing issues
+    match font_family_name.to_lowercase().as_str() {
+        "papyrus" => 1.4,             // Papyrus needs more spacing due to decorative nature
+        "chalkduster" => 1.3,         // Similar decorative font
+        "herculanum" => 1.3,          // Another decorative font
+        "bradley hand" => 1.2,        // Handwritten style fonts
+        "marker felt" => 1.2,         // Marker style fonts
+        "luminari" => 1.3,            // Fantasy/decorative fonts
+        "zapfino" => 1.5,             // Script fonts with lots of flourishes
+        "snell roundhand" => 1.3,     // Script fonts
+        "american typewriter" => 1.1, // Typewriter fonts can be tight
+        _ => {
+            // For unknown fonts, apply a small increase if they appear to be decorative
+            if font_family_name.to_lowercase().contains("script")
+                || font_family_name.to_lowercase().contains("hand")
+                || font_family_name.to_lowercase().contains("brush")
+                || font_family_name.to_lowercase().contains("calligraphy")
+            {
+                1.2
+            } else {
+                1.0 // Standard spacing for regular fonts
+            }
+        }
+    }
+}
+
+/// Produces a `TextGeometry` from the given font and text string with font-aware spacing.
 pub fn produce_text(font: Font, text: &str) -> Result<TextGeometry, Box<dyn Error>> {
+    produce_text_with_family_name(font, text, "")
+}
+
+/// Produces a `TextGeometry` from the given font and text string with font family name for spacing adjustments.
+pub fn produce_text_with_family_name(
+    font: Font,
+    text: &str,
+    font_family_name: &str,
+) -> Result<TextGeometry, Box<dyn Error>> {
     let cfont_font = font.clone();
     let face: Result<Face<'_>, Box<dyn Error>> =
         Face::from_slice(&font.bytes, 0).ok_or_else(|| "Value was none".into());
 
-    let font = cfont_font.core_font.unwrap();
+    let core_font = cfont_font.core_font.unwrap();
 
     let mut buffer = UnicodeBuffer::new();
     buffer.push_str(text);
@@ -154,6 +201,12 @@ pub fn produce_text(font: Font, text: &str) -> Result<TextGeometry, Box<dyn Erro
 
     let mut global_geometry: VertexBuffers<[f32; 2], u16> = VertexBuffers::new();
     let mut tess = FillTessellator::new();
+
+    // Extract font metrics for better spacing calculations
+    let (units_per_em, _line_height, _ascent) = get_font_metrics(&core_font);
+
+    // Calculate spacing multiplier based on font characteristics
+    let spacing_multiplier = calculate_spacing_multiplier(font_family_name);
 
     let mut cursor_x = 0.0f32;
 
@@ -166,10 +219,21 @@ pub fn produce_text(font: Font, text: &str) -> Result<TextGeometry, Box<dyn Erro
         let gid = info.glyph_id;
         let x_offset = pos.x_offset as f32;
         let y_offset = pos.y_offset as f32;
-        let x_advance = pos.x_advance as f32;
+        let mut x_advance = pos.x_advance as f32;
+
+        // Apply font-specific spacing adjustments
+        if spacing_multiplier != 1.0 {
+            x_advance *= spacing_multiplier;
+
+            // For decorative fonts, also add a small minimum spacing
+            if spacing_multiplier > 1.2 {
+                let min_spacing = units_per_em * 0.05; // 5% of em size as minimum spacing
+                x_advance = x_advance.max(min_spacing);
+            }
+        }
 
         let mut sink = PathBuilderSink::new();
-        font.outline(gid, font_kit::hinting::HintingOptions::None, &mut sink)?;
+        core_font.outline(gid, font_kit::hinting::HintingOptions::None, &mut sink)?;
         let path = sink.build();
 
         tess.tessellate_path(
@@ -205,7 +269,17 @@ pub fn produce_styled_text(
     text: &str,
     style: &TextStyle,
 ) -> Result<TextGeometry, Box<dyn Error>> {
-    let mut geometry = produce_text(font, text)?;
+    produce_styled_text_with_family_name(font, text, style, "")
+}
+
+/// Produces a `TextGeometry` from the given font, text string, style, and font family name for spacing adjustments.
+pub fn produce_styled_text_with_family_name(
+    font: Font,
+    text: &str,
+    style: &TextStyle,
+    font_family_name: &str,
+) -> Result<TextGeometry, Box<dyn Error>> {
+    let mut geometry = produce_text_with_family_name(font, text, font_family_name)?;
 
     // Apply style-specific modifications
     if style.is_bold() {
