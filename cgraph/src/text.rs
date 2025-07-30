@@ -2,7 +2,7 @@ use std::error::Error;
 
 use cfont::font::{
     load::get_system_font_with_style,
-    shape::{TextTransform, produce_styled_text, produce_text},
+    shape::{TextTransform, produce_styled_text_with_family_name, produce_text},
     style::{FontWeight, TextStyle},
 };
 use glam::Vec2;
@@ -202,8 +202,12 @@ pub fn make_styled_text(
     z_index: f32,
     position: Vec2,
 ) -> Result<Object, Box<dyn Error>> {
-    let mut result =
-        produce_styled_text(styled_font.core_font, text, &styled_font.transform.style)?;
+    let mut result = produce_styled_text_with_family_name(
+        styled_font.core_font,
+        text,
+        &styled_font.transform.style,
+        &styled_font.font_family,
+    )?;
 
     let font_units_per_em = 1000.0;
     result.transform_to_canvas(styled_font.transform, font_units_per_em);
