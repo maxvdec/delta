@@ -1,8 +1,8 @@
 use outbox::{
     app::Application,
-    component::{Column, Text},
+    component::{Column, Row, Text},
     renderable::Renderable,
-    stack,
+    row, stack,
     window::Window,
 };
 
@@ -15,7 +15,11 @@ fn main() {
         Text::new("This is a column layout!"),
         Text::new("Ain't this amazing?"),
         Text::new("Hello"),
-        Text::new("This is Outbox!")
+        Text::new("This is Outbox!"),
+        row!(
+            Text::new("This is a row layout!"),
+            Text::new("With multiple elements!")
+        )
     );
 
     col.add_spacing(10.0);

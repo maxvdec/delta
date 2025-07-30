@@ -1,6 +1,6 @@
 use cfont::font::{
     load::{Font, get_system_font, get_system_font_with_style},
-    shape::TextTransform,
+    shape::{TextTransform, produce_styled_text},
     style::TextStyle,
 };
 use cgraph::{
@@ -186,10 +186,21 @@ impl Renderable for Text {
     }
 
     fn get_size(&self) -> [f32; 2] {
-        let font_size = self.font_transform.font_size;
-        let width = font_size * self.content.len() as f32 * 0.6; // Approximate width based on character count
-        let height = font_size; // Height is approximately the font size
-        [width, height]
+        match produce_styled_text(self.font.clone(), &self.content, &self.font_transform.style) {
+            Ok(mut geometry) => {
+                let font_units_per_em = 1000.0;
+                geometry.transform_to_canvas(self.font_transform.clone(), font_units_per_em);
+
+                let (width, height) = geometry.pixel_dimensions();
+                [width / 2.0, height]
+            }
+            Err(_) => {
+                let font_size = self.font_transform.font_size;
+                let width = font_size * self.content.len() as f32 * 0.6;
+                let height = font_size;
+                [width, height]
+            }
+        }
     }
 
     fn padding(&mut self, padding: [f32; 2]) {

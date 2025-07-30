@@ -86,3 +86,95 @@ macro_rules! stack {
         }
     };
 }
+
+#[derive(Default)]
+pub struct Row {
+    pub elements: Vec<Box<dyn Renderable>>,
+    spacing: f32,
+    padding: [f32; 2],
+}
+
+impl Renderable for Row {
+    fn render(
+        &self,
+        canvas_size: [f32; 2],
+        assigned_position: [f32; 2],
+    ) -> Vec<cgraph::object::Object> {
+        let mut objects = Vec::new();
+        let mut position = assigned_position;
+        for element in &self.elements {
+            let element_objects = element.render(canvas_size, position);
+            objects.extend(element_objects);
+            let size = element.get_size();
+            position[0] += size[0]; // Move right for the next element
+        }
+        objects
+    }
+
+    fn get_size(&self) -> [f32; 2] {
+        let mut y_sizes = Vec::new();
+        let mut x_size = 0.0;
+        for element in &self.elements {
+            let element_size = element.get_size();
+            y_sizes.push(element_size[1]);
+            x_size += element_size[0];
+        }
+
+        if self.elements.len() > 1 {
+            x_size += self.spacing * (self.elements.len() - 1) as f32;
+        }
+
+        let max = y_sizes
+            .iter()
+            .cloned()
+            .filter(|v| !v.is_nan()) // Ignore NaN
+            .fold(None, |acc, x| Some(acc.map_or(x, |a: f32| a.max(x))));
+
+        if max.is_none() {
+            return [x_size, 0.0];
+        }
+
+        [x_size, max.unwrap()]
+    }
+
+    fn padding(&mut self, padding: [f32; 2]) {
+        self.padding = padding;
+        self.apply_padding_and_spacing();
+    }
+}
+
+impl Row {
+    pub fn add_element(&mut self, element: Box<dyn Renderable>) {
+        self.elements.push(element);
+    }
+
+    pub fn add_spacing(&mut self, spacing: f32) {
+        self.spacing = spacing;
+        self.apply_padding_and_spacing();
+    }
+
+    fn apply_padding_and_spacing(&mut self) {
+        if self.elements.is_empty() {
+            return;
+        }
+        self.elements[0].padding([self.padding[0], self.padding[1]]);
+        let mut x_offset = self.spacing;
+        for element in self.elements.iter_mut().skip(1) {
+            element.padding([self.padding[0] + x_offset, self.padding[1]]);
+            x_offset += self.spacing;
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! row {
+    ( $( $child:expr ),* $(,)?) => {
+        {
+            let mut row = Row::default();
+            $(
+                row.add_element(Box::new($child));
+            )*
+            row
+        }
+    };
+}
