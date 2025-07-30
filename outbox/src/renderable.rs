@@ -29,5 +29,8 @@ pub trait Renderable {
     fn get_event_handler(&self) -> Option<&EventManager> {
         None
     }
+    fn get_event_handler_mut(&mut self) -> Option<&mut EventManager> {
+        None
+    }
     fn copy(&self) -> Box<dyn Renderable>;
 }

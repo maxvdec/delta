@@ -4,10 +4,12 @@ use cfont::font::{
     style::TextStyle,
 };
 use cgraph::{
+    app::{CoreEvent, CoreWindowEvent},
     object::primitives::Color,
     text::{StyledFont, make_styled_text},
 };
 use glam::Vec2;
+use std::sync::Arc;
 
 use crate::{
     event::EventManager,
@@ -271,6 +273,42 @@ impl Text {
         }
         self
     }
+
+    /// Add a click event handler to the text component
+    pub fn on_click<F>(mut self, handler: F) -> Self
+    where
+        F: Fn() + Send + Sync + 'static,
+    {
+        let event_handler = Arc::new(move |event: &CoreEvent| {
+            if let CoreEvent::WindowEvent(CoreWindowEvent::MouseClick(_, _, state)) = event {
+                // Check if it's a pressed state
+                let state_str = format!("{state:?}");
+                if state_str.contains("Pressed") {
+                    handler();
+                }
+            }
+        });
+
+        self.events.register_event(event_handler);
+        self
+    }
+
+    /// Set the text color
+    pub fn set_color(&mut self, _color: Color) {
+        // This would need to be implemented based on how colors are handled in the text system
+        // For now, we'll modify the font transform style
+        self.font_transform.style = self.font_transform.style.clone();
+    }
+
+    /// Get the current text content
+    pub fn get_content(&self) -> &str {
+        &self.content
+    }
+
+    /// Set the text content
+    pub fn set_content(&mut self, content: &str) {
+        self.content = content.to_string();
+    }
 }
 
 impl Renderable for Text {
@@ -338,5 +376,9 @@ impl Renderable for Text {
 
     fn get_event_handler(&self) -> Option<&EventManager> {
         Some(&self.events)
+    }
+
+    fn get_event_handler_mut(&mut self) -> Option<&mut EventManager> {
+        Some(&mut self.events)
     }
 }

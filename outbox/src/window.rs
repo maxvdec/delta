@@ -2,6 +2,11 @@ use cgraph::app::{CoreEvent, CoreEventReference, CoreWindowEvent, WindowOptions}
 
 use crate::renderable::Renderable;
 
+pub struct InteractableObject {
+    pub bounds: [f32; 4], // [x, y, width, height]
+    pub renderable: Box<dyn Renderable>,
+}
+
 pub struct Window {
     pub title: String,
     pub width: u32,
@@ -44,24 +49,37 @@ impl Window {
         ));
         if let Some(mut window) = self.window.take() {
             let first_padding = self.main_view.get_padding();
+
+            // Render components
             for view in self.main_view.render(
                 [window.width as f32, window.height as f32],
                 [0.0 + first_padding[0], 0.0 + first_padding[1]],
             ) {
                 window.add_object(view);
             }
+
+            // Clone the main_view for use in the event handler
+            let main_view_clone = self.main_view.copy();
+
+            // Add an event handler for mouse clicks to route to components
             window.on_event(
                 CoreEventReference::WindowEvent,
-                |window, event, _objects| {
-                    if let CoreEvent::WindowEvent(CoreWindowEvent::MouseClick(_, button, _)) = event
+                move |_win_window, event, _shared| {
+                    if let CoreEvent::WindowEvent(CoreWindowEvent::MouseClick(_, _, state)) = event
                     {
-                        println!(
-                            "Mouse button clicked: {button:?} at position {:?}",
-                            window.get_mouse_position()
-                        );
+                        let state_str = format!("{state:?}");
+                        if state_str.contains("Pressed") {
+                            // For now, trigger event handlers on the main view
+                            // In the future, we can implement proper hit testing
+                            if let Some(event_handler) = main_view_clone.get_event_handler() {
+                                event_handler.handle_event(event);
+                            }
+                            println!("Mouse clicked!");
+                        }
                     }
                 },
             );
+
             window.launch();
         }
     }
