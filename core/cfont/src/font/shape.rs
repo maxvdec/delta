@@ -65,7 +65,7 @@ impl TextGeometry {
 
     /// Transforms the text geometry to fit within the specified canvas size.
     pub fn transform_to_canvas(&mut self, transform: TextTransform, font_units_per_em: f32) {
-        let (min_x, min_y, _, _) = self.bounding_box();
+        let (min_x, _min_y, _max_x, max_y) = self.bounding_box();
 
         let font_scale = transform.font_size / font_units_per_em;
 
@@ -76,16 +76,12 @@ impl TextGeometry {
             let pixel_y = y * font_scale;
 
             let local_x = pixel_x - (min_x * font_scale);
-            let local_y = pixel_y - (min_y * font_scale);
+            let local_y = (max_y * font_scale) - pixel_y;
 
-            let final_x = local_x + transform.position[0];
-            let final_y = local_y + transform.position[1];
-
-            vertex.position = [final_x, final_y];
+            vertex.position = [local_x, local_y];
         }
     }
 
-    /// Normalizes the vertex positions to fit within the canvas size.
     pub fn normalize_to_canvas(&mut self, canvas_size: [f32; 2]) {
         for vertex in &mut self.vertices {
             vertex.position[0] /= canvas_size[0];
@@ -93,7 +89,6 @@ impl TextGeometry {
         }
     }
 
-    /// Returns the pixel dimensions of the text geometry.
     pub fn pixel_dimensions(&self) -> (f32, f32) {
         let (min_x, min_y, max_x, max_y) = self.bounding_box();
         (max_x - min_x, max_y - min_y)

@@ -493,6 +493,12 @@ impl Window {
             .set_inner_size(winit::dpi::LogicalSize::new(width, height));
         self.renderer.resize(width as f64, height as f64);
     }
+
+    /// Gets the current framebuffer size of the window. In macOS and iOS, this is usually twice the size of the window.
+    pub fn framebuffer_size(&self) -> [f32; 2] {
+        let size = self.window.inner_size();
+        [size.width as f32, size.height as f32]
+    }
 }
 
 fn device_id_to_u32(device_id: &DeviceId) -> u32 {

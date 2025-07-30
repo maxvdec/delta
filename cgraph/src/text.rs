@@ -174,7 +174,10 @@ pub fn make_text(
     let mut vertices: Vec<Vertex> = vec![];
     for vertex in result.vertices {
         let vertex = Vertex {
-            position: Vec2::new(vertex.position[0], -vertex.position[1]),
+            position: Vec2::new(
+                vertex.position[0] + position.x,
+                vertex.position[1] + position.y,
+            ),
             color,
             z_index,
             uv: Vec2::new(0.0, 0.0),
@@ -185,7 +188,7 @@ pub fn make_text(
     let mut object = Object::new(vertices, indices);
     object.position = position;
     object.scale = Vec2::new(1.0, 1.0);
-    object.original_pixel_size = position;
+    object.original_pixel_size = Vec2::new(0.0, 0.0); // Will be calculated from text bounds
     object.rotation = 0.0;
     object.corner_radius = 0.0;
     Ok(object)
@@ -213,7 +216,10 @@ pub fn make_styled_text(
     let mut vertices: Vec<Vertex> = vec![];
     for vertex in result.vertices {
         let vertex = Vertex {
-            position: Vec2::new(vertex.position[0], -vertex.position[1]),
+            position: Vec2::new(
+                vertex.position[0] + position.x,
+                vertex.position[1] + position.y,
+            ),
             color,
             z_index,
             uv: Vec2::new(0.0, 0.0),
@@ -224,7 +230,7 @@ pub fn make_styled_text(
     let mut object = Object::new(vertices, indices);
     object.position = position;
     object.scale = Vec2::new(1.0, 1.0);
-    object.original_pixel_size = position;
+    object.original_pixel_size = Vec2::new(0.0, 0.0); // Will be calculated from text bounds
     object.rotation = 0.0;
     object.corner_radius = 0.0;
     Ok(object)
