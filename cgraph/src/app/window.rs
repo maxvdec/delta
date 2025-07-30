@@ -131,7 +131,8 @@ pub enum CoreEventReference {
     MemoryWarning,
 }
 
-type DelegateResponse = dyn Fn(&mut winit::window::Window, &mut CoreEvent) + 'static;
+type DelegateResponse =
+    dyn Fn(&mut winit::window::Window, &mut CoreEvent, &mut SharedObjects) + 'static;
 struct EventDelegate {
     response: Box<DelegateResponse>,
     event: CoreEventReference,
@@ -248,6 +249,7 @@ pub struct Window {
     window: winit::window::Window,
     event_loop: EventLoop<()>,
     events: Vec<EventDelegate>,
+    cursor_pos: (f64, f64),
 }
 
 fn apply_window_options(
@@ -299,6 +301,7 @@ impl Window {
             shared_objects: SharedObjects::new(),
             events: Vec::new(),
             background_color: Color::new(0.05, 0.05, 0.05, 1.0),
+            cursor_pos: (0.0, 0.0),
         }
     }
 
@@ -312,6 +315,7 @@ impl Window {
         window: &mut winit::window::Window,
         events: &[EventDelegate],
         event: &winit::event::Event<()>,
+        shared_objects: &mut SharedObjects,
     ) {
         match event {
             Event::WindowEvent { event, .. } => {
@@ -320,6 +324,7 @@ impl Window {
                         (delegate.response)(
                             window,
                             &mut CoreEvent::WindowEvent(window_from_winit_event(event)),
+                            shared_objects,
                         );
                     }
                 }
@@ -330,6 +335,7 @@ impl Window {
                         (delegate.response)(
                             window,
                             &mut CoreEvent::DeviceEvent(device_from_winit_event(event)),
+                            shared_objects,
                         );
                     }
                 }
@@ -339,47 +345,51 @@ impl Window {
     }
 
     /// Handles core events and delegates them to the appropriate handlers.
-    pub fn handle_core_event(&mut self, core_event: &mut CoreEvent) {
+    pub fn handle_core_event(
+        &mut self,
+        core_event: &mut CoreEvent,
+        shared_objects: &mut SharedObjects,
+    ) {
         match core_event {
             CoreEvent::WindowEvent(_) => {
                 for delegate in &self.events {
                     if let CoreEventReference::WindowEvent = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
             CoreEvent::DeviceEvent(_) => {
                 for delegate in &self.events {
                     if let CoreEventReference::DeviceEvent = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
             CoreEvent::UserEvent => {
                 for delegate in &self.events {
                     if let CoreEventReference::UserEvent = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
             CoreEvent::AppSuspended => {
                 for delegate in &self.events {
                     if let CoreEventReference::AppSuspended = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
             CoreEvent::AppResumed => {
                 for delegate in &self.events {
                     if let CoreEventReference::AppResumed = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
             CoreEvent::MemoryWarning => {
                 for delegate in &self.events {
                     if let CoreEventReference::MemoryWarning = delegate.event {
-                        (delegate.response)(&mut self.window, core_event);
+                        (delegate.response)(&mut self.window, core_event, shared_objects);
                     }
                 }
             }
@@ -389,7 +399,7 @@ impl Window {
     /// Adds an event handler for a specific core event type.
     pub fn on_event<F>(&mut self, event_type: CoreEventReference, handler: F)
     where
-        F: Fn(&mut winit::window::Window, &mut CoreEvent) + 'static,
+        F: Fn(&mut winit::window::Window, &mut CoreEvent, &mut SharedObjects) + 'static,
     {
         self.events.push(EventDelegate {
             response: Box::new(handler),
@@ -416,7 +426,7 @@ impl Window {
     }
 
     /// Launches the window and starts the event loop.
-    pub fn launch(self) {
+    pub fn launch(mut self) {
         let mut window = self.window;
         let mut objects = self.shared_objects;
         let update = self.update;
@@ -429,7 +439,7 @@ impl Window {
             *control_flow = ControlFlow::Wait;
 
             // Handle custom events before processing winit events
-            Self::execute_event_static(&mut window, &events, &event);
+            Self::execute_event_static(&mut window, &events, &event, &mut objects);
 
             match event {
                 Event::WindowEvent { event, .. } => match event {
@@ -439,6 +449,9 @@ impl Window {
                     }
                     WindowEvent::Resized(physical_size) => {
                         renderer.resize(physical_size.width as f64, physical_size.height as f64);
+                    }
+                    WindowEvent::CursorMoved { position, .. } => {
+                        self.cursor_pos = (position.x, position.y);
                     }
                     _ => (),
                 },
@@ -498,6 +511,10 @@ impl Window {
     pub fn framebuffer_size(&self) -> [f32; 2] {
         let size = self.window.inner_size();
         [size.width as f32, size.height as f32]
+    }
+
+    pub fn get_mouse_position(&self) -> (f64, f64) {
+        self.cursor_pos
     }
 }
 

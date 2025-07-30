@@ -1,3 +1,5 @@
+use crate::event::EventManager;
+
 #[derive(Debug, Clone)]
 pub enum PaddingDirection {
     Top,
@@ -23,6 +25,9 @@ pub trait Renderable {
     }
     fn get_padding(&self) -> [f32; 4] {
         [0.0, 0.0, 0.0, 0.0]
+    }
+    fn get_event_handler(&self) -> Option<&EventManager> {
+        None
     }
     fn copy(&self) -> Box<dyn Renderable>;
 }

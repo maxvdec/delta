@@ -1,12 +1,13 @@
 use cgraph::object::primitives::{Color, Position, Size, create_circle, create_rounded_quad};
 
-use crate::renderable::Renderable;
+use crate::{event::EventManager, renderable::Renderable};
 
 pub enum Shape {
     Circle {
         radius: f32,
         color: Color,
         padding: [f32; 4],
+        events: EventManager,
     },
     Rectangle {
         width: f32,
@@ -14,6 +15,7 @@ pub enum Shape {
         corner_radius: f32,
         color: Color,
         padding: [f32; 4],
+        events: EventManager,
     },
 }
 
@@ -24,10 +26,12 @@ impl Renderable for Shape {
                 radius,
                 color,
                 padding,
+                events,
             } => Box::new(Shape::Circle {
                 radius: *radius,
                 color: *color,
                 padding: *padding,
+                events: events.clone(),
             }),
             Shape::Rectangle {
                 width,
@@ -35,12 +39,14 @@ impl Renderable for Shape {
                 corner_radius,
                 color,
                 padding,
+                events,
             } => Box::new(Shape::Rectangle {
                 width: *width,
                 height: *height,
                 corner_radius: *corner_radius,
                 color: *color,
                 padding: *padding,
+                events: events.clone(),
             }),
         }
     }
@@ -92,6 +98,13 @@ impl Renderable for Shape {
             }
         }
     }
+
+    fn get_event_handler(&self) -> Option<&EventManager> {
+        match self {
+            Shape::Circle { events, .. } => Some(events),
+            Shape::Rectangle { events, .. } => Some(events),
+        }
+    }
 }
 
 impl Shape {
@@ -102,6 +115,7 @@ impl Shape {
             corner_radius: 0.0,
             color,
             padding: [0.0, 0.0, 0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 
@@ -117,6 +131,7 @@ impl Shape {
             corner_radius,
             color,
             padding: [0.0, 0.0, 0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 
@@ -125,6 +140,7 @@ impl Shape {
             radius,
             color,
             padding: [0.0, 0.0, 0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 

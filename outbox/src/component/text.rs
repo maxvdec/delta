@@ -10,6 +10,7 @@ use cgraph::{
 use glam::Vec2;
 
 use crate::{
+    event::EventManager,
     renderable::{PaddingDirection, Renderable},
     window::Window,
 };
@@ -18,6 +19,7 @@ use crate::{
 pub struct Text {
     pub content: String,
     pub font: Font,
+    pub events: EventManager,
     font_family: String,
     font_transform: cfont::font::shape::TextTransform,
     padding: [f32; 4],
@@ -44,6 +46,7 @@ impl Default for Text {
             padding: [0.0, 0.0, 0.0, 0.0], // [left, top, right, bottom]
             overrides_position: false,
             overrided_position: [0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 }
@@ -74,6 +77,7 @@ impl Text {
             padding: [0.0, 0.0, 0.0, 0.0], // [left, top, right, bottom]
             overrides_position: false,
             overrided_position: [0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 
@@ -97,6 +101,7 @@ impl Text {
             padding: [0.0, 0.0, 0.0, 0.0], // [left, top, right, bottom]
             overrides_position: false,
             overrided_position: [0.0, 0.0],
+            events: EventManager::default(),
         }
     }
 
@@ -329,5 +334,9 @@ impl Renderable for Text {
 
     fn copy(&self) -> Box<dyn Renderable> {
         Box::new(self.clone())
+    }
+
+    fn get_event_handler(&self) -> Option<&EventManager> {
+        Some(&self.events)
     }
 }

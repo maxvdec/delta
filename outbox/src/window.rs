@@ -1,4 +1,4 @@
-use cgraph::app::WindowOptions;
+use cgraph::app::{CoreEvent, CoreEventReference, CoreWindowEvent, WindowOptions};
 
 use crate::renderable::Renderable;
 
@@ -50,6 +50,18 @@ impl Window {
             ) {
                 window.add_object(view);
             }
+            window.on_event(
+                CoreEventReference::WindowEvent,
+                |window, event, _objects| {
+                    if let CoreEvent::WindowEvent(CoreWindowEvent::MouseClick(_, button, _)) = event
+                    {
+                        println!(
+                            "Mouse button clicked: {button:?} at position {:?}",
+                            window.get_mouse_position()
+                        );
+                    }
+                },
+            );
             window.launch();
         }
     }
