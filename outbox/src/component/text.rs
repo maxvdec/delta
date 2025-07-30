@@ -1,9 +1,9 @@
 use cfont::font::{
     load::{Font, get_system_font},
-    render_text,
     shape::TextTransform,
     style::TextStyle,
 };
+use cgraph::{object::primitives::Color, text::make_text};
 use glam::Vec2;
 
 use crate::renderable::Renderable;
@@ -13,6 +13,8 @@ pub struct Text {
     pub font: Font,
     font_transform: cfont::font::shape::TextTransform,
     padding: [f32; 2],
+    overrides_position: bool,
+    overrided_position: [f32; 2],
 }
 
 impl Default for Text {
@@ -27,6 +29,8 @@ impl Default for Text {
                 style: TextStyle::new(),
             },
             padding: [0.0, 0.0],
+            overrides_position: false,
+            overrided_position: [0.0, 0.0],
         }
     }
 }
@@ -54,6 +58,8 @@ impl Text {
                 style: TextStyle::new(),
             },
             padding: [0.0, 0.0],
+            overrides_position: false,
+            overrided_position: [0.0, 0.0],
         }
     }
 
@@ -64,6 +70,11 @@ impl Text {
     pub fn set_font_by_name(&mut self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.font = get_system_font(name)?;
         Ok(())
+    }
+
+    pub fn override_position(&mut self, position: [f32; 2]) {
+        self.overrides_position = true;
+        self.overrided_position = position;
     }
 
     pub fn bold(&mut self) {
@@ -125,58 +136,28 @@ impl Renderable for Text {
         transform.canvas_size = canvas_size;
         transform.position = [0.0, 0.0];
 
-        // Use cfont's render_text function which properly handles styles
-        let font_family = if cfg!(target_os = "macos") {
-            "SF Pro"
-        } else {
-            "Arial"
+        let cfont = cgraph::text::Font {
+            core_font: self.font.clone(),
+            transform,
         };
 
-        let text_geometry = match render_text(font_family, &self.content, transform) {
-            Ok(geometry) => geometry,
-            Err(e) => {
-                eprintln!("Error creating text geometry: {e:?}");
-                return Vec::new();
-            }
-        };
-
-        // Convert cfont geometry to cgraph objects
-        let mut indices: Vec<u32> = vec![];
-        for index in text_geometry.indices {
-            indices.push(index as u32);
-        }
-
-        let mut vertices: Vec<cgraph::object::Vertex> = vec![];
-        let color = cgraph::object::primitives::Color::new(1.0, 1.0, 1.0, 1.0);
-
-        for vertex in text_geometry.vertices {
-            let vertex = cgraph::object::Vertex {
-                position: Vec2::new(
-                    vertex.position[0] + assigned_position[0] + self.padding[0],
-                    vertex.position[1] + assigned_position[1] + self.padding[1],
-                ),
-                color,
-                z_index: 1.0,
-                uv: Vec2::new(0.0, 0.0),
-            };
-            vertices.push(vertex);
-        }
-
-        if vertices.is_empty() {
-            return Vec::new();
-        }
-
-        let mut object = cgraph::object::Object::new(vertices, indices);
-        object.position = Vec2::new(
-            assigned_position[0] + self.padding[0],
-            assigned_position[1] + self.padding[1],
+        let object = make_text(
+            cfont,
+            &self.content,
+            Color::new(1.0, 1.0, 1.0, 1.0),
+            1.0,
+            Vec2::new(
+                assigned_position[0] + self.padding[0],
+                assigned_position[1] + self.padding[1],
+            ),
         );
-        object.scale = Vec2::new(1.0, 1.0);
-        object.original_pixel_size = Vec2::new(0.0, 0.0);
-        object.rotation = 0.0;
-        object.corner_radius = 0.0;
 
-        vec![object]
+        if object.is_err() {
+            eprintln!("Failed to render text: {}", object.err().unwrap());
+            return vec![];
+        }
+
+        vec![object.unwrap()]
     }
 
     fn get_size(&self) -> [f32; 2] {

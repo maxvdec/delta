@@ -8,7 +8,7 @@ fn main() {
     text.set_font_by_name("Arial").unwrap();
     text.set_size(24.0);
     text.extra_bold();
-    text.padding([10.0, 10.0]);
+    text.padding([0.0, 10.0]);
 
     win.set_main_view(text);
     app.set_main_window(win);

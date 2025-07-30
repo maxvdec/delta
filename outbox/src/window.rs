@@ -41,7 +41,10 @@ impl Window {
             Some(self.options.clone()),
         ));
         if let Some(mut window) = self.window.take() {
-            for view in self.main_view.render(window.framebuffer_size(), [0.0, 0.0]) {
+            for view in self
+                .main_view
+                .render([window.width as f32, window.height as f32], [0.0, 0.0])
+            {
                 window.add_object(view);
             }
             window.launch();
